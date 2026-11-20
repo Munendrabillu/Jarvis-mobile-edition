@@ -852,4 +852,41 @@ imgInput.addEventListener(
 
             add(answer, "ai");
             remember(
-        
+                "Image analysis: " + answer,
+                "model"
+            );
+
+            speak(answer);
+
+        } catch (error) {
+            console.error(error);
+
+            add(
+                "Image analysis failed: " +
+                error.message,
+                "ai"
+            );
+
+        } finally {
+            sendBtn.disabled = false;
+            imgInput.value = "";
+
+            if (coreText) {
+                coreText.textContent = "SYSTEM READY";
+            }
+        }
+    }
+);
+
+// ======================================================
+// 17. INITIALIZATION
+// ======================================================
+
+console.log("J.A.R.V.I.S. loaded successfully.");
+
+if (coreText) {
+    coreText.textContent = "SYSTEM READY";
+}
+
+
+
