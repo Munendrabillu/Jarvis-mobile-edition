@@ -1,6 +1,6 @@
 // =======================================================
-// J.A.R.V.I.S. - COMPLETE FIXED SCRIPT
-// Gemini 3.8 Flash + Voice + Image + Memory + Tools
+// J.A.R.V.I.S. - COMPLETE UPDATED SCRIPT
+// Retry + Model Fallback + Voice + Image + Memory + Tools
 // =======================================================
 
 
@@ -17,7 +17,13 @@ if (!API_KEY) {
     }
 }
 
-const MODEL = "gemini-3.8-flash";
+// Multiple models for automatic fallback
+const MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite"
+];
 
 
 // ====================== 2. HTML ELEMENTS ======================
@@ -151,11 +157,8 @@ function setProcessing(active) {
     sendBtn.textContent =
         active ? "WAIT..." : "EXECUTE";
 
-    if (active) {
-        sendBtn.style.opacity = "0.6";
-    } else {
-        sendBtn.style.opacity = "1";
-    }
+    sendBtn.style.opacity =
+        active ? "0.6" : "1";
 }
 
 
@@ -179,7 +182,17 @@ function speak(text) {
 }
 
 
-// ====================== 7. GEMINI API ======================
+// ====================== 7. DELAY ======================
+
+function delay(ms) {
+
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
+}
+
+
+// ====================== 8. GEMINI API WITH FALLBACK ======================
 
 async function callGemini(prompt, imageData = null) {
 
@@ -233,73 +246,190 @@ async function callGemini(prompt, imageData = null) {
 
     }
 
-    const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/interactions",
-        {
-            method: "POST",
 
-            headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": API_KEY
-            },
+    // Try all available models
 
-            body: JSON.stringify({
-                model: MODEL,
-                input: requestInput
-            })
+    let lastError = null;
+
+    for (const model of MODELS) {
+
+        // Two attempts per model
+        for (let attempt = 1; attempt <= 2; attempt++) {
+
+            try {
+
+                setStatus(
+                    "CONNECTING " +
+                    model +
+                    "..."
+                );
+
+                const response = await fetch(
+                    "https://generativelanguage.googleapis.com/v1beta/interactions",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": API_KEY
+                        },
+
+                        body: JSON.stringify({
+                            model: model,
+                            input: requestInput
+                        })
+                    }
+                );
+
+
+                // Read API response
+
+                const data = await response.json();
+
+
+                // Handle errors
+
+                if (!response.ok) {
+
+                    const apiMessage =
+                        data?.error?.message ||
+                        data?.message ||
+                        "Unknown API error";
+
+                    const error = new Error(
+                        "HTTP " +
+                        response.status +
+                        ": " +
+                        apiMessage
+                    );
+
+                    error.status = response.status;
+
+                    throw error;
+                }
+
+
+                // Extract response text
+
+                let answer = "";
+
+                if (data.output_text) {
+
+                    answer = data.output_text;
+                }
+
+
+                // Extract from steps
+
+                if (!answer && Array.isArray(data.steps)) {
+
+                    answer = data.steps
+                        .filter(step =>
+                            step.type === "model_output"
+                        )
+                        .flatMap(step =>
+                            step.content || []
+                        )
+                        .filter(part =>
+                            part.type === "text"
+                        )
+                        .map(part =>
+                            part.text || ""
+                        )
+                        .join("\n");
+                }
+
+
+                // Extract from output
+
+                if (!answer && Array.isArray(data.output)) {
+
+                    answer = data.output
+                        .filter(part =>
+                            part.type === "text"
+                        )
+                        .map(part =>
+                            part.text || ""
+                        )
+                        .join("\n");
+                }
+
+
+                if (!answer) {
+
+                    throw new Error(
+                        "The model returned an empty response."
+                    );
+                }
+
+
+                console.log(
+                    "JARVIS successful model:",
+                    model
+                );
+
+                return answer.trim();
+
+
+            } catch (error) {
+
+                lastError = error;
+
+                console.error(
+                    "Model failed:",
+                    model,
+                    "Attempt:",
+                    attempt,
+                    error
+                );
+
+
+                // Do not retry invalid API keys
+
+                if (
+                    error.status === 400 ||
+                    error.status === 401 ||
+                    error.status === 403
+                ) {
+
+                    throw error;
+                }
+
+
+                // Wait before retrying
+
+                if (attempt < 2) {
+
+                    setStatus(
+                        "RETRYING " +
+                        model +
+                        "..."
+                    );
+
+                    await delay(2000);
+                }
+            }
         }
-    );
 
-    const data = await response.json();
 
-    if (!response.ok) {
+        // Switch to next model
 
-        const apiMessage =
-            data?.error?.message ||
-            data?.message ||
-            "Unknown API error";
-
-        throw new Error(
-            "Gemini API (" +
-            response.status +
-            "): " +
-            apiMessage
+        setStatus(
+            "SWITCHING MODEL..."
         );
+
+        await delay(1000);
     }
 
-    let answer = "";
 
-    if (data.output_text) {
-        answer = data.output_text;
-    }
-
-    if (!answer && Array.isArray(data.steps)) {
-
-        answer = data.steps
-            .filter(step => step.type === "model_output")
-            .flatMap(step => step.content || [])
-            .filter(part => part.type === "text")
-            .map(part => part.text || "")
-            .join("\n");
-    }
-
-    if (!answer && Array.isArray(data.output)) {
-
-        answer = data.output
-            .filter(part => part.type === "text")
-            .map(part => part.text || "")
-            .join("\n");
-    }
-
-    if (!answer) {
-        throw new Error("Gemini returned an empty response.");
-    }
-
-    return answer.trim();
+    throw new Error(
+        "All Gemini models failed. Last error: " +
+        (lastError?.message || "Unknown error")
+    );
 }
 
 
-// ====================== 8. SAVE PERSONAL FACTS ======================
+// ====================== 9. SAVE PERSONAL FACTS ======================
 
 function normalizeKey(text) {
 
@@ -373,6 +503,7 @@ function findSavedFact(text) {
             const key = normalizeKey(match[1]);
 
             if (FACTS[key]) {
+
                 return {
                     key: key,
                     value: FACTS[key]
@@ -385,7 +516,7 @@ function findSavedFact(text) {
 }
 
 
-// ====================== 9. SIMPLE TOOLS ======================
+// ====================== 10. SIMPLE TOOLS ======================
 
 async function handleTools(text) {
 
@@ -543,25 +674,32 @@ async function handleTools(text) {
 
     // HELP
 
-    if (t === "help" || t.includes("available commands")) {
+    if (
+        t === "help" ||
+        t.includes("available commands")
+    ) {
 
         return "You can ask me questions, tell me facts to remember, " +
             "ask for time or date, check weather, search Google, " +
-            "search YouTube, open websites, or ask me to analyze an image.";
+            "search YouTube, open websites, or analyze images.";
     }
 
     return null;
 }
 
 
-// ====================== 10. WEATHER ======================
+// ====================== 11. WEATHER ======================
 
 async function getWeather() {
 
     return new Promise((resolve, reject) => {
 
         if (!navigator.geolocation) {
-            reject(new Error("Location is not supported."));
+
+            reject(
+                new Error("Location is not supported.")
+            );
+
             return;
         }
 
@@ -583,7 +721,9 @@ async function getWeather() {
                     const response = await fetch(url);
 
                     if (!response.ok) {
-                        throw new Error("Weather request failed.");
+                        throw new Error(
+                            "Weather request failed."
+                        );
                     }
 
                     const data = await response.json();
@@ -601,8 +741,11 @@ async function getWeather() {
             },
 
             () => {
+
                 reject(
-                    new Error("Please allow location access.")
+                    new Error(
+                        "Please allow location access."
+                    )
                 );
             }
         );
@@ -610,7 +753,7 @@ async function getWeather() {
 }
 
 
-// ====================== 11. TIMER ======================
+// ====================== 12. TIMER ======================
 
 function handleTimer(text) {
 
@@ -618,7 +761,10 @@ function handleTimer(text) {
         /(\d+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)\b/i
     );
 
-    if (!match || !text.toLowerCase().includes("timer")) {
+    if (
+        !match ||
+        !text.toLowerCase().includes("timer")
+    ) {
         return null;
     }
 
@@ -638,25 +784,34 @@ function handleTimer(text) {
     const milliseconds = amount * factor;
 
     if (milliseconds > 2147483647) {
+
         return "That timer is too long.";
     }
 
     setTimeout(() => {
 
-        const message = "Your " +
-            amount + " " + unit +
+        const message =
+            "Your " +
+            amount +
+            " " +
+            unit +
             " timer has finished.";
 
         add(message, "ai");
+
         speak(message);
 
     }, milliseconds);
 
-    return "Timer set for " + amount + " " + unit + ".";
+    return "Timer set for " +
+        amount +
+        " " +
+        unit +
+        ".";
 }
 
 
-// ====================== 12. MAIN COMMAND ======================
+// ====================== 13. MAIN COMMAND ======================
 
 let isBusy = false;
 
@@ -681,7 +836,8 @@ async function processCommand() {
 
     try {
 
-        // Save facts automatically
+
+        // SAVE FACTS
 
         const saved = saveUserFact(text);
 
@@ -704,7 +860,7 @@ async function processCommand() {
         }
 
 
-        // Recall saved facts
+        // RECALL FACTS
 
         const fact = findSavedFact(text);
 
@@ -727,7 +883,7 @@ async function processCommand() {
         }
 
 
-        // Direct tools
+        // DIRECT TOOLS
 
         const toolResult = await handleTools(text);
 
@@ -743,7 +899,7 @@ async function processCommand() {
         }
 
 
-        // Timer
+        // TIMER
 
         const timerResult = handleTimer(text);
 
@@ -759,7 +915,7 @@ async function processCommand() {
         }
 
 
-        // Weather
+        // WEATHER
 
         if (/\bweather\b/i.test(text)) {
 
@@ -775,7 +931,7 @@ async function processCommand() {
         }
 
 
-        // AI RESPONSE
+        // GEMINI AI
 
         const answer = await callGemini(text);
 
@@ -790,14 +946,16 @@ async function processCommand() {
 
         console.error("JARVIS ERROR:", error);
 
-        const message =
+        add(
             "ERROR: " +
-            (error.message || "Unknown error");
+            error.message,
+            "ai"
+        );
 
-        add(message, "ai");
-
-        remember(message, "model");
-
+        remember(
+            "ERROR: " + error.message,
+            "model"
+        );
 
     } finally {
 
@@ -808,7 +966,7 @@ async function processCommand() {
 }
 
 
-// ====================== 13. SEND BUTTON ======================
+// ====================== 14. SEND BUTTON ======================
 
 sendBtn.addEventListener(
     "click",
@@ -816,7 +974,7 @@ sendBtn.addEventListener(
 );
 
 
-// ====================== 14. ENTER KEY ======================
+// ====================== 15. ENTER KEY ======================
 
 input.addEventListener(
     "keydown",
@@ -832,7 +990,7 @@ input.addEventListener(
 );
 
 
-// ====================== 15. VOICE INPUT ======================
+// ====================== 16. VOICE INPUT ======================
 
 let recognition = null;
 
@@ -856,224 +1014,4 @@ if (SpeechRecognition) {
 
         setStatus("LISTENING...");
 
-        micBtn.style.background = "black";
-
-        micBtn.style.color = "#00f7ff";
-    };
-
-
-    recognition.onresult = function(event) {
-
-        const spokenText =
-            event.results[0][0].transcript;
-
-        input.value = spokenText;
-
-        processCommand();
-    };
-
-
-    recognition.onerror = function(event) {
-
-        console.error("Voice error:", event.error);
-
-        setStatus("SYSTEM READY");
-
-        add(
-            "Voice error: " + event.error,
-            "ai"
-        );
-    };
-
-
-    recognition.onend = function() {
-
-        setStatus("SYSTEM READY");
-
-        micBtn.style.background = "#00f7ff";
-
-        micBtn.style.color = "black";
-    };
-
-
-    micBtn.addEventListener(
-        "click",
-        function() {
-
-            if (isBusy) return;
-
-            try {
-
-                recognition.start();
-
-            } catch (error) {
-
-                console.error(error);
-            }
-        }
-    );
-
-
-} else {
-
-    micBtn.addEventListener(
-        "click",
-        function() {
-
-            add(
-                "Voice recognition is not supported in this browser. " +
-                "Try Chrome.",
-                "ai"
-            );
-        }
-    );
-}
-
-
-// ====================== 16. IMAGE INPUT ======================
-
-camBtn.addEventListener(
-    "click",
-    function() {
-
-        imgInput.click();
-    }
-);
-
-
-imgInput.addEventListener(
-    "change",
-    async function() {
-
-        const file = imgInput.files[0];
-
-        if (!file) return;
-
-        if (!file.type.startsWith("image/")) {
-
-            add("Please select an image.", "ai");
-
-            imgInput.value = "";
-
-            return;
-        }
-
-        if (file.size > 4 * 1024 * 1024) {
-
-            add(
-                "Please choose an image smaller than 4 MB.",
-                "ai"
-            );
-
-            imgInput.value = "";
-
-            return;
-        }
-
-        isBusy = true;
-
-        setProcessing(true);
-
-        add("Analyzing selected image...", "ai");
-
-        try {
-
-            const base64 = await new Promise(
-                (resolve, reject) => {
-
-                    const reader = new FileReader();
-
-                    reader.onload = function() {
-
-                        const result = reader.result;
-
-                        resolve(
-                            result.split(",")[1]
-                        );
-                    };
-
-                    reader.onerror = reject;
-
-                    reader.readAsDataURL(file);
-                }
-            );
-
-            const imageData = {
-                base64: base64,
-                mime: file.type
-            };
-
-            const answer = await callGemini(
-                "Describe this image and answer what you can see.",
-                imageData
-            );
-
-            add(answer, "ai");
-
-            remember(
-                "Image analysis: " + answer,
-                "model"
-            );
-
-            speak(answer);
-
-        } catch (error) {
-
-            console.error("IMAGE ERROR:", error);
-
-            add(
-                "Image error: " + error.message,
-                "ai"
-            );
-
-        } finally {
-
-            isBusy = false;
-
-            setProcessing(false);
-
-            imgInput.value = "";
-        }
-    }
-);
-
-
-// ====================== 17. CLEAR MEMORY ======================
-
-clearBtn.addEventListener(
-    "click",
-    function() {
-
-        const confirmed = confirm(
-            "Delete all chat history and saved facts?"
-        );
-
-        if (!confirmed) return;
-
-        MEMORY = [];
-
-        FACTS = {};
-
-        localStorage.removeItem("jarvis_memory");
-
-        localStorage.removeItem("jarvis_facts");
-
-        chat.innerHTML = "";
-
-        speechSynthesis.cancel();
-
-        add(
-            "Chat history and saved facts cleared.",
-            "ai"
-        );
-
-        setStatus("SYSTEM READY");
-    }
-);
-
-
-// ====================== 18. START ======================
-
-setStatus("SYSTEM READY");
-
-console.log("J.A.R.V.I.S. fully loaded.");
+        mic
