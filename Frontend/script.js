@@ -1,6 +1,5 @@
 
-// =============== JARVIS FAST STREAMING AI ===============
-// Gemini Interactions API + Memory + Voice + Camera
+// =============== JARVIS AI - RETRY + BACKUP MODELS ===============
 
 const $ = id => document.getElementById(id);
 
@@ -13,8 +12,16 @@ const clear = $("clear-btn");
 const imgInput = $("img-input");
 const coreText = $("core-text");
 
-const MODEL = "gemini-3.8-flash";
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
+// First model is preferred. Others are fallbacks.
+const MODELS = [
+  "gemini-3.8-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash-lite"
+];
+
+const API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/interactions";
 
 let API_KEY = localStorage.getItem("jarvis_key");
 
@@ -27,7 +34,7 @@ if (!API_KEY) {
   }
 }
 
-// =============== LOAD MEMORY ===============
+// =============== MEMORY ===============
 
 function loadJSON(key, fallback) {
   try {
@@ -194,35 +201,25 @@ function handleTools(text) {
       }
     }
 
-    return "Please enter a valid mathematical expression.";
+    return "Please enter a valid calculation.";
   }
 
   return null;
 }
 
-// =============== GEMINI STREAMING API ===============
+// =============== WAIT / RETRY HELPERS ===============
 
-async function askGemini(question, onChunk, imageData = null) {
-  if (!API_KEY) {
-    throw new Error("Gemini API key is missing. Reload and enter your key.");
-  }
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-  const previous = history.slice(-8).map(item => ({
-    role: item.role,
-    text: item.text
-  }));
+function isTemporaryError(status) {
+  return [408, 429, 500, 502, 503, 504].includes(status);
+}
 
-  const prompt =
-    "You are JARVIS, a helpful personal AI assistant. " +
-    "Answer naturally and clearly. Keep ordinary answers concise. " +
-    "Use these saved personal facts when relevant: " +
-    JSON.stringify(memory) +
-    "\nConversation:\n" +
-    previous.map(x =>
-      (x.role === "user" ? "User: " : "JARVIS: ") + x.text
-    ).join("\n") +
-    "\nUser: " + question;
+// =============== GEMINI STREAMING ===============
 
+async function askOneModel(model, prompt, onChunk, imageData) {
   const input = imageData
     ? [
         { type: "text", text: prompt },
@@ -245,7 +242,7 @@ async function askGemini(question, onChunk, imageData = null) {
         "x-goog-api-key": API_KEY
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: model,
         input: input,
         stream: true,
         store: false
@@ -262,7 +259,12 @@ async function askGemini(question, onChunk, imageData = null) {
         detail = parsed.error?.message || errorText;
       } catch {}
 
-      throw new Error("API " + response.status + ": " + detail);
+      const error = new Error(
+        "API " + response.status + ": " + detail
+      );
+
+      error.status = response.status;
+      throw error;
     }
 
     if (!response.body) {
@@ -295,7 +297,7 @@ async function askGemini(question, onChunk, imageData = null) {
 
         if (event.event_type === "error" || event.error) {
           throw new Error(
-            event.error?.message || "Gemini streaming error."
+            event.error?.message || "Gemini stream error."
           );
         }
 
@@ -332,7 +334,7 @@ async function askGemini(question, onChunk, imageData = null) {
     }
 
     if (!answer.trim()) {
-      throw new Error("Gemini returned no text. Check your model access and API key.");
+      throw new Error("The model returned an empty response.");
     }
 
     return answer.trim();
@@ -340,6 +342,78 @@ async function askGemini(question, onChunk, imageData = null) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+// =============== AUTOMATIC MODEL FALLBACK ===============
+
+async function askGemini(question, onChunk, imageData = null) {
+  if (!API_KEY) {
+    throw new Error("Gemini API key is missing.");
+  }
+
+  const previous = history.slice(-8).map(item => ({
+    role: item.role,
+    text: item.text
+  }));
+
+  const prompt =
+    "You are JARVIS, a helpful personal AI assistant. " +
+    "Answer naturally and clearly. Keep ordinary answers concise. " +
+    "Use these saved personal facts when relevant: " +
+    JSON.stringify(memory) +
+    "\nConversation:\n" +
+    previous.map(x =>
+      (x.role === "user" ? "User: " : "JARVIS: ") + x.text
+    ).join("\n") +
+    "\nUser: " + question;
+
+  let lastError;
+
+  for (const model of MODELS) {
+    // Try each model up to two times for temporary errors.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      setStatus("CONNECTING " + model);
+
+      try {
+        const result = await askOneModel(
+          model,
+          prompt,
+          onChunk,
+          imageData
+        );
+
+        return result;
+
+      } catch (error) {
+        lastError = error;
+
+        // Do not retry if the response has already started.
+        // This avoids displaying duplicate streamed text.
+        if (error.name === "AbortError") {
+          throw new Error("Request timed out. Please try again.");
+        }
+
+        const temporary =
+          error.status && isTemporaryError(error.status);
+
+        if (!temporary) {
+          // Try the next model for model-specific or access errors.
+          break;
+        }
+
+        if (attempt < 2) {
+          setStatus("RETRYING " + model);
+          await wait(1500 * attempt);
+        }
+      }
+    }
+  }
+
+  throw new Error(
+    "All available models failed. Last error: " +
+    (lastError?.message || "Unknown error") +
+    ". Please try again later."
+  );
 }
 
 // =============== SPEECH OUTPUT ===============
@@ -390,8 +464,6 @@ async function sendMessage(text, imageData = null) {
     } else {
       reply = addMessage("", "assistant");
 
-      setStatus("CONNECTING " + MODEL);
-
       answer = await askGemini(
         text || "Describe this image.",
         chunk => {
@@ -418,10 +490,7 @@ async function sendMessage(text, imageData = null) {
     if (answer) speak(answer);
 
   } catch (error) {
-    const errorMessage =
-      error.name === "AbortError"
-        ? "Gemini timed out after 60 seconds. Check your connection."
-        : "JARVIS error: " + error.message;
+    const errorMessage = "JARVIS error: " + error.message;
 
     if (reply) {
       reply.textContent = errorMessage;
@@ -481,8 +550,7 @@ if (mic) {
     recognition.onstart = () => setStatus("LISTENING");
 
     recognition.onresult = event => {
-      const spoken = event.results[0][0].transcript;
-      sendMessage(spoken);
+      sendMessage(event.results[0][0].transcript);
     };
 
     recognition.onerror = () => {
@@ -570,4 +638,4 @@ history.forEach(item => {
 
 setStatus("ONLINE");
 
-console.log("JARVIS READY:", MODEL);
+console.log("JARVIS READY. Available models:", MODELS);
