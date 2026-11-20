@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,43 +25,39 @@
     </div>
 
     <!-- Core Status -->
-    <p class="core-text" id="core-text">
-        SYSTEM READY
-    </p>
+    <p class="core-text" id="core-text">SYSTEM READY</p>
 
-    <!-- System Diagnostics -->
+    <!-- Diagnostics -->
     <section class="status">
         <h2>SYSTEM DIAGNOSTICS</h2>
 
         <div class="row">
             <span>AI ENGINE</span>
-            <b class="on">● OPERATIONAL</b>
+            <b id="ai-status" class="on">● READY</b>
         </div>
 
         <div class="row">
             <span>CONNECTION</span>
-            <b class="on">● ONLINE</b>
+            <b id="connection-status" class="on">● ONLINE</b>
         </div>
 
         <div class="row">
             <span>VOICE INTERFACE</span>
-            <b class="on">● READY</b>
+            <b id="voice-status" class="on">● READY</b>
         </div>
 
         <div class="row">
             <span>LONG-TERM MEMORY</span>
-            <b class="on">● ACTIVE</b>
+            <b id="memory-status" class="on">● ACTIVE</b>
         </div>
     </section>
 
-    <!-- Chat Display -->
-    <main class="chat" id="chat" aria-live="polite">
-    </main>
+    <!-- Chat -->
+    <main class="chat" id="chat" aria-live="polite"></main>
 
-    <!-- Command Input -->
+    <!-- Input -->
     <div class="input-area">
 
-        <!-- Text Input -->
         <input
             type="text"
             id="msg"
@@ -69,42 +66,27 @@
             aria-label="Enter your command"
         >
 
-        <!-- Execute -->
-        <button type="button" id="send">
-            EXECUTE
-        </button>
+        <button type="button" id="send">EXECUTE</button>
 
-        <!-- Voice -->
-        <button
-            type="button"
-            id="mic-btn"
-            aria-label="Activate voice input"
-        >
+        <button type="button" id="mic-btn" aria-label="Voice input">
             🎙️
         </button>
 
-        <!-- Image -->
-        <button
-            type="button"
-            id="cam-btn"
-            aria-label="Analyze image"
-        >
+        <button type="button" id="cam-btn" aria-label="Analyze image">
             📷
         </button>
 
-        <!-- Clear -->
         <button type="button" id="clear-btn">
             CLEAR MEMORY
         </button>
 
-        <!-- Image Input -->
         <input
-    type="file"
-    id="img-input"
-    accept="image/*"
-    capture="environment"
-    hidden
->
+            type="file"
+            id="img-input"
+            accept="image/*"
+            capture="environment"
+            hidden
+        >
 
     </div>
 
