@@ -915,4 +915,44 @@ imgInput.addEventListener(
 
             remember(
                 "User uploaded an image for analysis.",
+                "user"
+            );
+
+            remember(answer, "model");
+
+            speak(answer);
+
+            resetStatus();
+
+        } catch (error) {
+
+            console.error(
+                "Image error:",
+                error
+            );
+
+            add(
+                "Image analysis failed: " +
+                error.message,
+                "ai"
+            );
+
+            setStatus("IMAGE ERROR");
+
+        } finally {
+
+            isProcessing = false;
+
+            sendBtn.disabled = false;
+
+            imgInput.value = "";
+        }
+    }
+);
+
+// ==================== 20. READY ====================
+
+console.log("J.A.R.V.I.S. loaded successfully.");
+
+resetStatus();
       
