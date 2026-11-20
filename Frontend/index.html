@@ -1,15 +1,76 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#03131e"><title>J.A.R.V.I.S. Mobile</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#030b13">
+  <meta name="description" content="J.A.R.V.I.S. bilingual personal AI assistant">
+  <title>J.A.R.V.I.S. — Mobile Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
-<main class="app">
-<header><h1>J.A.R.V.I.S.</h1><div class="subtitle">MOBILE EDITION <span class="dot"></span></div></header>
-<section class="core-wrap" aria-label="JARVIS core"><div class="core-ring ring1"><div class="ring2"><div class="ring3"><div class="core">J</div></div></div></div><div class="core-caption">CORE <b>ACTIVE</b></div><div class="init">SYSTEM INITIALIZED</div></section>
-<section class="panel status"><h2><i>▤</i> SYSTEM STATUS <span class="line"></span></h2><div class="status-grid"><div><small>AI CORE</small><strong class="green">● ONLINE</strong></div><div><small>INTERFACE</small><strong class="green">● ACTIVE</strong></div><div><small>VOICE</small><strong id="voice-status" class="amber">○ READY</strong></div><div><small>MEMORY</small><strong class="amber">○ LOCAL</strong></div></div></section>
-<section class="panel chat-panel"><h2><i>◇</i> COMMUNICATION LINK <span class="line"></span><button id="clear-chat" title="Clear chat">⌫</button></h2><div id="chat-messages" class="messages" aria-live="polite"></div><div class="composer"><textarea id="message-input" rows="1" placeholder="Enter a command..." aria-label="Message"></textarea><button id="mic-btn" class="mic" title="Voice input">♩</button><button id="send-btn" class="send">SEND <span>➤</span></button></div><div class="hint">PRESS ENTER TO SEND · SHIFT+ENTER FOR NEW LINE</div></section>
-<footer>J.A.R.V.I.S. <span>PERSONAL AI INTERFACE</span></footer>
-</main><script src="script.js"></script></body></html>
+  <main class="app-shell">
+    <header class="header">
+      <div class="eyebrow">PERSONAL AI ASSISTANT <span class="pulse-dot"></span></div>
+      <h1>J.A.R.V.I.S.</h1>
+      <div class="edition">MOBILE EDITION <span class="edition-line"></span> BILINGUAL AI</div>
+    </header>
+
+    <section class="reactor-section" aria-label="Animated JARVIS reactor">
+      <div class="reactor">
+        <div class="ring ring-outer"></div>
+        <div class="ring ring-middle"></div>
+        <div class="ring ring-inner"></div>
+        <div class="reactor-core"><span>J</span></div>
+      </div>
+      <div class="core-state">CORE <strong>ACTIVE</strong></div>
+      <div class="core-caption">GEMINI NEURAL LINK</div>
+    </section>
+
+    <section class="panel status-panel">
+      <div class="panel-heading"><span class="heading-mark">▥</span> SYSTEM STATUS <span class="heading-rule"></span></div>
+      <div class="status-grid">
+        <div class="status-cell"><span>AI CORE</span><b id="ai-status" class="status-wait">● WAITING</b></div>
+        <div class="status-cell"><span>NETWORK</span><b id="network-status" class="status-ok">● READY</b></div>
+        <div class="status-cell"><span>VOICE INPUT</span><b id="voice-status" class="status-wait">○ CHECKING</b></div>
+        <div class="status-cell"><span>VOICE OUTPUT</span><b id="speech-status" class="status-wait">○ CHECKING</b></div>
+      </div>
+    </section>
+
+    <section class="panel assistant-panel">
+      <div class="panel-heading"><span class="heading-mark">◈</span> COMMUNICATION LINK <span class="heading-rule"></span></div>
+
+      <div class="toolbar">
+        <label class="language-control" for="language-select">VOICE LANGUAGE
+          <select id="language-select">
+            <option value="auto">Auto detect (English / తెలుగు)</option>
+            <option value="en-IN">English</option>
+            <option value="te-IN">తెలుగు (Telugu)</option>
+          </select>
+        </label>
+        <button id="clear-chat" class="secondary-button" type="button">CLEAR</button>
+      </div>
+
+      <div id="chat" class="chat-window" aria-live="polite" aria-label="Conversation">
+        <article class="message assistant-message">
+          <div class="message-label">J.A.R.V.I.S.</div>
+          <p>Systems online, Boss. Ask me in English or Telugu. నేను సిద్ధంగా ఉన్నాను, Boss.</p>
+        </article>
+      </div>
+
+      <form id="chat-form" class="composer">
+        <input id="msg" type="text" placeholder="Ask J.A.R.V.I.S. / అడగండి..." autocomplete="off" aria-label="Type a message">
+        <button id="mic-btn" class="mic-button" type="button" aria-label="Start voice recognition" title="Speak">🎙️</button>
+        <button id="send" class="send-button" type="submit">SEND <span>➤</span></button>
+      </form>
+      <div class="composer-hint">ENTER TO SEND · TAP MIC TO SPEAK</div>
+    </section>
+
+    <footer>J.A.R.V.I.S. PERSONAL INTERFACE <span>•</span> ENGLISH + TELUGU</footer>
+  </main>
+</body>
+</html>
