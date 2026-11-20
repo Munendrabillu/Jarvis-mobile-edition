@@ -1,6 +1,10 @@
-// ========== JARVIS | INTERACTIONS API ==========
+
+// =============== JARVIS FAST STREAMING AI ===============
+// Gemini 3.8 Flash + Interactions API
+// Progressive replies + instant memory + voice + camera
 
 const $ = id => document.getElementById(id);
+
 const chat = $("chat");
 const msg = $("msg");
 const send = $("send");
@@ -11,42 +15,46 @@ const imgInput = $("img-input");
 const coreText = $("core-text");
 
 const MODEL = "gemini-3.8-flash";
+const API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/interactions";
+
 let API_KEY = localStorage.getItem("jarvis_key");
 
 if (!API_KEY) {
-  API_KEY = prompt("Enter Gemini API key:");
+  API_KEY = prompt("Enter your Gemini API key:");
   if (API_KEY) {
     API_KEY = API_KEY.trim();
     localStorage.setItem("jarvis_key", API_KEY);
   }
 }
 
-let memory = {};
-let history = [];
+// =============== LOAD MEMORY ===============
 
-try {
-  memory = JSON.parse(localStorage.getItem("jarvis_memory") || "{}");
-} catch {
-  memory = {};
+function loadJSON(key, fallback) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "null") ?? fallback;
+  } catch {
+    return fallback;
+  }
 }
 
-try {
-  history = JSON.parse(localStorage.getItem("jarvis_history") || "[]");
-} catch {
-  history = [];
-}
-
-function setStatus(s) {
-  if (coreText) coreText.textContent = s;
-}
+let memory = loadJSON("jarvis_memory", {});
+let history = loadJSON("jarvis_history", []);
+let busy = false;
 
 function saveMemory() {
   localStorage.setItem("jarvis_memory", JSON.stringify(memory));
 }
 
 function saveHistory() {
-  history = history.slice(-10);
+  history = history.slice(-12);
   localStorage.setItem("jarvis_history", JSON.stringify(history));
+}
+
+// =============== UI ===============
+
+function setStatus(value) {
+  if (coreText) coreText.textContent = value;
 }
 
 function addMessage(text, sender) {
@@ -55,131 +63,143 @@ function addMessage(text, sender) {
   div.textContent = text;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
+  return div;
 }
 
+function setSendDisabled(disabled) {
+  if (send) send.disabled = disabled;
+}
+
+// =============== PERSONAL MEMORY ===============
+
 function storeFact(text) {
-  let m;
+  const patterns = [
+    {
+      regex: /my favou?rite colou?r is\s+(.+)/i,
+      key: "favourite_colour",
+      label: "favourite colour"
+    },
+    {
+      regex: /my favou?rite food is\s+(.+)/i,
+      key: "favourite_food",
+      label: "favourite food"
+    },
+    {
+      regex: /my favou?rite movie is\s+(.+)/i,
+      key: "favourite_movie",
+      label: "favourite movie"
+    },
+    {
+      regex: /my name is\s+(.+)/i,
+      key: "user_name",
+      label: "name"
+    }
+  ];
 
-  m = text.match(/my favou?rite colou?r is\s+(.+)/i);
-  if (m) {
-    memory.favourite_colour = m[1].trim().replace(/[.!?]+$/, "");
-    saveMemory();
-    return "I will remember your favourite colour is " +
-      memory.favourite_colour + ".";
-  }
+  for (const item of patterns) {
+    const match = text.match(item.regex);
 
-  m = text.match(/my favou?rite food is\s+(.+)/i);
-  if (m) {
-    memory.favourite_food = m[1].trim().replace(/[.!?]+$/, "");
-    saveMemory();
-    return "I will remember your favourite food is " +
-      memory.favourite_food + ".";
-  }
+    if (match) {
+      const value = match[1].trim().replace(/[.!?]+$/, "");
+      memory[item.key] = value;
+      saveMemory();
 
-  m = text.match(/my name is\s+(.+)/i);
-  if (m) {
-    memory.user_name = m[1].trim().replace(/[.!?]+$/, "");
-    saveMemory();
-    return "I will remember your name.";
+      return "I will remember your " +
+        item.label + " is " + value + ".";
+    }
   }
 
   return null;
 }
 
 function recallFact(text) {
-  const t = text.toLowerCase();
+  const q = text.toLowerCase();
 
   if (
-    t.includes("favourite colour") ||
-    t.includes("favorite color") ||
-    t.includes("favourite color") ||
-    t.includes("favorite colour")
+    /favou?rite colou?r/.test(q) &&
+    memory.favourite_colour
   ) {
-    if (memory.favourite_colour) {
-      return "Your favourite colour is " +
-        memory.favourite_colour + ".";
-    }
-  }
-
-  if (t.includes("favourite food") || t.includes("favorite food")) {
-    if (memory.favourite_food) {
-      return "Your favourite food is " +
-        memory.favourite_food + ".";
-    }
+    return "Your favourite colour is " +
+      memory.favourite_colour + ".";
   }
 
   if (
-    t.includes("what is my name") ||
-    t.includes("what's my name") ||
-    t.includes("who am i")
+    /favou?rite food/.test(q) &&
+    memory.favourite_food
   ) {
-    if (memory.user_name) {
-      return "Your name is " + memory.user_name + ".";
-    }
+    return "Your favourite food is " +
+      memory.favourite_food + ".";
+  }
+
+  if (
+    /favou?rite movie/.test(q) &&
+    memory.favourite_movie
+  ) {
+    return "Your favourite movie is " +
+      memory.favourite_movie + ".";
+  }
+
+  if (
+    /what is my name|what's my name|who am i/.test(q) &&
+    memory.user_name
+  ) {
+    return "Your name is " + memory.user_name + ".";
   }
 
   return null;
 }
 
-async function handleTools(text) {
-  const t = text.toLowerCase().trim();
+// =============== LOCAL TOOLS ===============
 
-  if (/\btime\b/.test(t)) {
+function handleTools(text) {
+  const q = text.toLowerCase().trim();
+
+  if (q === "time" || q.includes("what time")) {
     return "The time is " + new Date().toLocaleTimeString();
   }
 
   if (
-    t.includes("today's date") ||
-    t.includes("what date") ||
-    t === "date"
+    q === "date" ||
+    q.includes("today's date") ||
+    q.includes("what date")
   ) {
     return "Today is " + new Date().toLocaleDateString();
   }
 
-  if (t.startsWith("google ") || t.startsWith("search ")) {
-    const q = text.replace(/^(google|search)\s+/i, "");
+  if (q.startsWith("google ") || q.startsWith("search ")) {
+    const query = text.replace(/^(google|search)\s+/i, "");
     window.open(
       "https://www.google.com/search?q=" +
-      encodeURIComponent(q),
+      encodeURIComponent(query),
       "_blank"
     );
-    return "Searching Google for " + q;
+    return "Searching Google for " + query;
   }
 
-  if (t.startsWith("youtube ")) {
-    const q = text.replace(/^youtube\s+/i, "");
+  if (q.startsWith("youtube ")) {
+    const query = text.replace(/^youtube\s+/i, "");
     window.open(
       "https://www.youtube.com/results?search_query=" +
-      encodeURIComponent(q),
+      encodeURIComponent(query),
       "_blank"
     );
-    return "Searching YouTube for " + q;
+    return "Searching YouTube for " + query;
   }
 
-  if (t.startsWith("wiki ")) {
-    const q = text.replace(/^wiki\s+/i, "");
-    window.open(
-      "https://en.wikipedia.org/wiki/Special:Search?search=" +
-      encodeURIComponent(q),
-      "_blank"
-    );
-    return "Searching Wikipedia for " + q;
-  }
+  if (q.startsWith("calculate ")) {
+    const expression = text.replace(/^calculate\s+/i, "");
 
-  if (t.startsWith("calculate ")) {
-    const exp = text.replace(/^calculate\s+/i, "");
-
-    if (/^[\d+\-*/().%\s]+$/.test(exp)) {
+    if (/^[\d+\-*/().%\s]+$/.test(expression)) {
       try {
         const result = Function(
-          '"use strict";return (' + exp + ')'
+          '"use strict";return (' + expression + ")"
         )();
 
         if (Number.isFinite(result)) {
-          return "Answer: " + result;
+          return "The answer is " + result;
         }
       } catch {
-        return "Calculation error.";
+        return "I could not calculate that expression.";
       }
     }
   }
@@ -187,234 +207,308 @@ async function handleTools(text) {
   return null;
 }
 
-// ========== INTERACTIONS API ==========
+// =============== STREAMING GEMINI API ===============
 
-async function askGemini(question, imageData = null) {
-  if (!API_KEY) return "API key missing.";
-
-  // Include a small amount of history in the input.
-  const context = history.slice(-6).map(item =>
-    item.role === "user"
-      ? "User: " + item.text
-      : "JARVIS: " + item.text
-  ).join("\n");
-
-  const input = [];
-
-  input.push({
-    type: "text",
-    text:
-      "You are JARVIS, a helpful personal AI assistant. " +
-      "Answer naturally, briefly and accurately. " +
-      "Use the user's saved facts when relevant. " +
-      "Saved memory: " + JSON.stringify(memory) + "\n" +
-      context + "\nCurrent user message: " + question
-  });
-
-  if (imageData) {
-    input.push({
-      type: "image",
-      data: imageData.data,
-      mime_type: imageData.mimeType
-    });
+async function askGemini(question, onChunk, imageData = null) {
+  if (!API_KEY) {
+    throw new Error("Gemini API key is missing.");
   }
 
+  const previous = history.slice(-8).map(item => ({
+    role: item.role,
+    text: item.text
+  }));
+
+  const prompt =
+    "You are JARVIS, a helpful personal AI assistant. " +
+    "Answer naturally and clearly. Keep ordinary answers concise. " +
+    "Use these saved personal facts when relevant: " +
+    JSON.stringify(memory) +
+    "\nConversation:\n" +
+    previous.map(x =>
+      (x.role === "user" ? "User: " : "JARVIS: ") + x.text
+    ).join("\n") +
+    "\nUser: " + question;
+
+  const input = imageData
+    ? [
+        { type: "text", text: prompt },
+        {
+          type: "image",
+          data: imageData.data,
+          mime_type: imageData.mimeType
+        }
+      ]
+    : prompt;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45000);
+
   try {
-    setStatus("CONNECTING");
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 30000);
-
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/interactions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": API_KEY
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          input: input,
-          store: false,
-          generation_config: {
-            max_output_tokens: 512,
-            thinking_level: "low"
-          }
-        }),
-        signal: controller.signal
-      }
-    );
-
-    clearTimeout(timer);
-
-    const data = await response.json();
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": API_KEY
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        input: input,
+        stream: true,
+        store: false,
+        generation_config: {
+          max_output_tokens: 300,
+          thinking_level: "low"
+        }
+      }),
+      signal: controller.signal
+    });
 
     if (!response.ok) {
-      return "API Error " + response.status + ": " +
-        (data.error?.message || JSON.stringify(data));
+      const errorText = await response.text();
+      let detail = errorText;
+
+      try {
+        const parsed = JSON.parse(errorText);
+        detail = parsed.error?.message || errorText;
+      } catch {}
+
+      throw new Error("API " + response.status + ": " + detail);
     }
 
-    // Extract output from Interactions response.
-    if (data.output_text) {
-      return data.output_text.trim();
+    if (!response.body) {
+      throw new Error("Streaming is not supported by this browser.");
     }
 
-    let texts = [];
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
 
-    if (Array.isArray(data.steps)) {
-      for (const step of data.steps) {
-        if (step.type === "model_output") {
-          for (const item of (step.content || [])) {
-            if (item.type === "text" && item.text) {
-              texts.push(item.text);
-            }
+    let buffer = "";
+    let answer = "";
+    let gotText = false;
+
+    function processEvent(eventText) {
+      const lines = eventText.split(/\r?\n/);
+
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+
+        const raw = line.slice(5).trim();
+        if (!raw || raw === "[DONE]") continue;
+
+        let event;
+
+        try {
+          event = JSON.parse(raw);
+        } catch {
+          continue;
+        }
+
+        if (event.error) {
+          throw new Error(event.error.message || "Stream error");
+        }
+
+        if (event.event_type === "step.delta") {
+          const delta = event.delta;
+
+          if (delta && delta.type === "text" && delta.text) {
+            gotText = true;
+            answer += delta.text;
+            onChunk(delta.text);
           }
         }
       }
     }
 
-    if (texts.length) {
-      return texts.join("\n").trim();
-    }
+    while (true) {
+      const result = await reader.read();
 
-    if (Array.isArray(data.output)) {
-      for (const item of data.output) {
-        if (item.type === "text" && item.text) {
-          texts.push(item.text);
-        }
+      if (result.done) break;
+
+      buffer += decoder.decode(result.value, { stream: true });
+
+      const events = buffer.split(/\r?\n\r?\n/);
+      buffer = events.pop() || "";
+
+      for (const eventText of events) {
+        processEvent(eventText);
       }
     }
 
-    if (texts.length) {
-      return texts.join("\n").trim();
+    buffer += decoder.decode();
+
+    if (buffer.trim()) {
+      processEvent(buffer);
     }
 
-    return "Gemini returned no readable text. " +
-      JSON.stringify(data).slice(0, 500);
-
-  } catch (e) {
-    if (e.name === "AbortError") {
-      return "Request timed out. Please try again.";
+    if (!gotText || !answer.trim()) {
+      throw new Error("Gemini returned no text. Please try again.");
     }
 
-    return "Connection failed: " + e.message;
+    return answer.trim();
+
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
-// ========== VOICE OUTPUT ==========
+// =============== SPEECH OUTPUT ===============
 
 function speak(text) {
   if (!window.speechSynthesis) return;
 
-  window.speechSynthesis.cancel();
+  speechSynthesis.cancel();
 
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = 1.05;
-  speechSynthesis.speak(u);
+  const speech = new SpeechSynthesisUtterance(text);
+  speech.rate = 1.05;
+  speech.pitch = 1;
+
+  speechSynthesis.speak(speech);
 }
 
-// ========== MAIN MESSAGE ==========
+// =============== MAIN SEND ===============
 
 async function sendMessage(text, imageData = null) {
   text = (text || "").trim();
 
-  if (!text && !imageData) return;
+  if ((!text && !imageData) || busy) return;
 
   if (text) addMessage(text, "user");
-
   if (msg) msg.value = "";
 
+  busy = true;
+  setSendDisabled(true);
   setStatus("THINKING");
 
+  let answer = "";
+
   try {
-    let answer = null;
+    // Local memory and commands need no network request.
+    answer = text ? storeFact(text) : null;
 
-    if (text) answer = storeFact(text);
-    if (!answer && text) answer = recallFact(text);
-    if (!answer && text) answer = await handleTools(text);
-
-    if (!answer) {
-      answer = await askGemini(text, imageData);
+    if (!answer && text) {
+      answer = recallFact(text);
     }
 
-    addMessage(answer, "assistant");
+    if (!answer && text) {
+      answer = handleTools(text);
+    }
+
+    if (answer) {
+      addMessage(answer, "assistant");
+    } else {
+      // Create an empty assistant bubble and fill it as chunks arrive.
+      const reply = addMessage("", "assistant");
+
+      setStatus("CONNECTING " + MODEL);
+
+      answer = await askGemini(
+        text || "Describe this image.",
+        chunk => {
+          reply.textContent += chunk;
+          chat.scrollTop = chat.scrollHeight;
+
+          setStatus("RESPONDING");
+        },
+        imageData
+      );
+
+      reply.textContent = answer;
+    }
 
     if (text) {
-      history.push({ role: "user", text });
+      history.push({ role: "user", text: text });
       history.push({ role: "assistant", text: answer });
       saveHistory();
     }
 
     speak(answer);
 
-  } catch (e) {
-    addMessage("Error: " + e.message, "assistant");
-  }
+  } catch (error) {
+    const message =
+      error.name === "AbortError"
+        ? "Gemini timed out after 45 seconds. Check your connection or API availability."
+        : "JARVIS error: " + error.message;
 
-  setStatus("ONLINE");
+    addMessage(message, "assistant");
+    setStatus("ERROR");
+
+  } finally {
+    busy = false;
+    setSendDisabled(false);
+
+    if (coreText && coreText.textContent !== "ERROR") {
+      setStatus("ONLINE");
+    }
+  }
 }
 
-// ========== SEND ==========
+// =============== SEND BUTTON ===============
 
 if (send) {
-  send.addEventListener("click", () => sendMessage(msg.value));
+  send.addEventListener("click", () => {
+    sendMessage(msg ? msg.value : "");
+  });
 }
 
 if (msg) {
-  msg.addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+  msg.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       sendMessage(msg.value);
     }
   });
 }
 
-// ========== MIC ==========
+// =============== MICROPHONE ===============
 
 if (mic) {
   mic.addEventListener("click", () => {
-    const SR = window.SpeechRecognition ||
+    const Recognition =
+      window.SpeechRecognition ||
       window.webkitSpeechRecognition;
 
-    if (!SR) {
-      addMessage("Speech recognition unavailable.", "assistant");
+    if (!Recognition) {
+      addMessage("Voice recognition is unavailable in this browser.", "assistant");
       return;
     }
 
-    const r = new SR();
-    r.lang = "en-IN";
+    const recognition = new Recognition();
+    recognition.lang = "en-IN";
 
-    r.onstart = () => setStatus("LISTENING");
+    recognition.onstart = () => setStatus("LISTENING");
 
-    r.onresult = e => {
-      const spoken = e.results[0][0].transcript;
-      msg.value = spoken;
+    recognition.onresult = event => {
+      const spoken = event.results[0][0].transcript;
       sendMessage(spoken);
     };
 
-    r.onerror = () =>
-      addMessage("Microphone error.", "assistant");
+    recognition.onerror = () => {
+      setStatus("ONLINE");
+      addMessage("Microphone error. Check browser permission.", "assistant");
+    };
 
-    r.onend = () => setStatus("ONLINE");
+    recognition.onend = () => {
+      if (!busy) setStatus("ONLINE");
+    };
 
-    r.start();
+    recognition.start();
   });
 }
 
-// ========== CAMERA ==========
+// =============== CAMERA ===============
 
 if (cam && imgInput) {
   cam.addEventListener("click", () => imgInput.click());
 }
 
 if (imgInput) {
-  imgInput.addEventListener("change", e => {
-    const file = e.target.files[0];
+  imgInput.addEventListener("change", event => {
+    const file = event.target.files[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      addMessage("Select an image file.", "assistant");
+      addMessage("Please select an image.", "assistant");
       return;
     }
 
@@ -427,7 +521,7 @@ if (imgInput) {
       };
 
       sendMessage(
-        msg.value.trim() || "Describe this image.",
+        msg ? msg.value.trim() : "Describe this image.",
         imageData
       );
     };
@@ -437,19 +531,21 @@ if (imgInput) {
   });
 }
 
-// ========== CLEAR CHAT ==========
+// =============== CLEAR CHAT ===============
 
 if (clear) {
   clear.addEventListener("click", () => {
     history = [];
     localStorage.removeItem("jarvis_history");
-    chat.innerHTML = "";
-    addMessage("Chat cleared. Memory is preserved.", "assistant");
+
+    if (chat) chat.innerHTML = "";
+
+    addMessage("Chat cleared. Saved memories are preserved.", "assistant");
     setStatus("ONLINE");
   });
 }
 
-// ========== RESTORE ==========
+// =============== RESTORE CHAT ===============
 
 history.forEach(item => {
   addMessage(
@@ -459,4 +555,4 @@ history.forEach(item => {
 });
 
 setStatus("ONLINE");
-console.log("JARVIS INTERACTIONS API READY");
+console.log("JARVIS STREAMING READY:", MODEL);
