@@ -1,103 +1,231 @@
-(() => {
-  const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
-  let API_KEY = localStorage.getItem("jarvis_key") || "";
-  let chatHistory = JSON.parse(localStorage.getItem("jarvis_memory") || "[]");
 
-  const chatBox = document.getElementById("chat-messages");
+(() => {
+  "use strict";
+
+  const API_URL =
+    "https://generativelanguage.googleapis.com/v1beta/models/";
+
+  // Models are attempted in order
+  const MODELS = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash"
+  ];
+
+  let apiKey = localStorage.getItem("jarvis_key") || "";
+  let history = [];
+
+  try {
+    history = JSON.parse(localStorage.getItem("jarvis_memory") || "[]");
+  } catch {
+    history = [];
+  }
+
+  const box = document.getElementById("chat-messages");
   const input = document.getElementById("message-input");
   const sendBtn = document.getElementById("send-btn");
   const micBtn = document.getElementById("mic-btn");
   const clearBtn = document.getElementById("clear-chat");
-  const languageSelect = document.getElementById("language");
 
-  if (!API_KEY) {
-    API_KEY = prompt("Enter your Gemini API Key:");
-    if (API_KEY) {
-      localStorage.setItem("jarvis_key", API_KEY);
+  const aiStatus = document.getElementById("ai-status");
+  const voiceStatus = document.getElementById("voice-status");
+  const memoryStatus = document.getElementById("memory-status");
+
+  let busy = false;
+
+  if (!apiKey) {
+    apiKey = prompt("Enter your Gemini API key:");
+
+    if (apiKey) {
+      localStorage.setItem("jarvis_key", apiKey);
     }
   }
 
-  function addMessage(sender, text) {
-    const div = document.createElement("div");
-    div.className = "message " + sender;
-    div.textContent = text;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
+  // Save chat history
+  function persist() {
+    localStorage.setItem("jarvis_memory", JSON.stringify(history));
   }
 
-  function saveMemory() {
-    localStorage.setItem("jarvis_memory", JSON.stringify(chatHistory));
+  // Create chat messages
+  function addMessage(role, text, kind = "") {
+    const el = document.createElement("div");
+
+    el.className =
+      "msg " +
+      (role === "user" ? "user" : "assistant") +
+      (kind ? " " + kind : "");
+
+    const label = document.createElement("span");
+    label.className = "sender";
+    label.textContent = role === "user" ? "YOU" : "J.A.R.V.I.S.";
+
+    const content = document.createElement("div");
+    content.className = "message-text";
+    content.textContent = text;
+
+    el.append(label, content);
+    box.appendChild(el);
+
+    box.scrollTop = box.scrollHeight;
+
+    return el;
   }
 
-  function restoreChat() {
-    chatHistory.forEach(msg => {
-      addMessage(msg.role === "user" ? "user" : "assistant", msg.text);
+  // Display previous messages
+  function render() {
+    box.innerHTML = "";
+
+    if (history.length === 0) {
+      addMessage(
+        "assistant",
+        "Systems online. How may I assist you, Boss?"
+      );
+    }
+
+    history.forEach(message => {
+      addMessage(
+        message.role === "user" ? "user" : "assistant",
+        message.text
+      );
     });
   }
 
-  async function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
+  // Send request to Gemini
+  async function callModel(model) {
+    const url =
+      API_URL +
+      model +
+      ":generateContent?key=" +
+      encodeURIComponent(apiKey);
 
-    if (!API_KEY) {
-      addMessage("assistant", "API key is missing.");
+    const contents = history.map(message => ({
+      role: message.role === "assistant" ? "model" : "user",
+      parts: [{ text: message.text }]
+    }));
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024
+        }
+      })
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const error = new Error(
+        data?.error?.message || "HTTP " + response.status
+      );
+
+      error.status = response.status;
+      throw error;
+    }
+
+    return (
+      data?.candidates?.[0]?.content?.parts
+        ?.map(part => part.text || "")
+        .join("") || "No response received."
+    );
+  }
+
+  // Try alternate models
+  async function getReply() {
+    let lastError;
+
+    for (const model of MODELS) {
+      try {
+        return await callModel(model);
+      } catch (error) {
+        lastError = error;
+
+        if (error.status !== 404 && error.status !== 400) {
+          throw error;
+        }
+      }
+    }
+
+    throw new Error(
+      "All Gemini models failed. Check your API key and model access. " +
+      (lastError?.message || "")
+    );
+  }
+
+  // AI response
+  async function send() {
+    const text = input.value.trim();
+
+    if (!text || busy) return;
+
+    if (!apiKey) {
+      addMessage("assistant", "API key missing.", "error");
       return;
     }
 
-    input.value = "";
-    addMessage("user", text);
-
-    chatHistory.push({ role: "user", text });
-    saveMemory();
-
+    busy = true;
     sendBtn.disabled = true;
 
-    const typing = document.createElement("div");
-    typing.className = "message assistant";
-    typing.textContent = "J.A.R.V.I.S. is thinking...";
-    chatBox.appendChild(typing);
+    input.value = "";
+
+    addMessage("user", text);
+
+    history.push({
+      role: "user",
+      text: text
+    });
+
+    persist();
+
+    const pending = addMessage(
+      "assistant",
+      "Establishing neural connection..."
+    );
+
+    if (aiStatus) {
+      aiStatus.textContent = "PROCESSING";
+    }
 
     try {
-      const model = "gemini-2.5-flash";
+      const reply = await getReply();
 
-      const response = await fetch(
-        `${API_URL}${model}:generateContent?key=${API_KEY}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            contents: chatHistory.map(msg => ({
-              role: msg.role === "assistant" ? "model" : "user",
-              parts: [{ text: msg.text }]
-            }))
-          })
-        }
-      );
+      pending.remove();
 
-      if (!response.ok) {
-        throw new Error("Gemini API error: " + response.status);
-      }
-
-      const data = await response.json();
-
-      const reply =
-        data.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "I couldn't generate a response.";
-
-      typing.remove();
       addMessage("assistant", reply);
 
-      chatHistory.push({ role: "assistant", text: reply });
-      saveMemory();
+      history.push({
+        role: "assistant",
+        text: reply
+      });
+
+      persist();
 
       speak(reply);
+
+      if (aiStatus) {
+        aiStatus.textContent = "ONLINE";
+      }
     } catch (error) {
-      typing.remove();
-      addMessage("assistant", "Error: " + error.message);
+      pending.remove();
+
+      addMessage(
+        "assistant",
+        "CONNECTION ERROR: " + error.message,
+        "error"
+      );
+
+      if (aiStatus) {
+        aiStatus.textContent = "ERROR";
+      }
     } finally {
+      busy = false;
       sendBtn.disabled = false;
+      input.focus();
     }
   }
 
@@ -108,83 +236,107 @@
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-
-    const selectedLanguage = languageSelect?.value || "auto";
-
-    if (selectedLanguage === "te-IN") {
-      utterance.lang = "te-IN";
-    } else if (selectedLanguage === "en-IN") {
-      utterance.lang = "en-IN";
-    } else {
-      utterance.lang = "en-US";
-    }
+    utterance.lang = "en-IN";
+    utterance.rate = 1;
+    utterance.pitch = 0.9;
 
     window.speechSynthesis.speak(utterance);
   }
 
-  // Voice input
+  // Voice recognition
   const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
 
-  let recognition;
+  let recognition = null;
 
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
+
     recognition.continuous = false;
     recognition.interimResults = false;
+    recognition.lang = "en-IN";
 
-    recognition.onresult = event => {
-      const transcript = event.results[0][0].transcript;
-      input.value = transcript;
-      sendMessage();
+    recognition.onstart = () => {
+      if (voiceStatus) {
+        voiceStatus.textContent = "LISTENING";
+        voiceStatus.className = "green";
+      }
+
+      micBtn.classList.add("listening");
     };
 
-    recognition.onerror = () => {
-      addMessage("assistant", "Voice recognition error.");
+    recognition.onresult = event => {
+      input.value = event.results[0][0].transcript;
+      send();
+    };
+
+    recognition.onerror = event => {
+      if (voiceStatus) {
+        voiceStatus.textContent = "VOICE ERROR";
+        voiceStatus.className = "amber";
+      }
+
+      addMessage(
+        "assistant",
+        "Voice recognition error: " + event.error,
+        "error"
+      );
     };
 
     recognition.onend = () => {
+      if (voiceStatus) {
+        voiceStatus.textContent = "READY";
+        voiceStatus.className = "";
+      }
+
       micBtn.classList.remove("listening");
     };
   }
 
-  function startListening() {
+  // Mic button
+  micBtn.addEventListener("click", () => {
     if (!recognition) {
-      addMessage("assistant", "Voice recognition is not supported.");
+      addMessage(
+        "assistant",
+        "Voice recognition is not supported in this browser.",
+        "error"
+      );
       return;
     }
 
-    const selectedLanguage = languageSelect?.value || "auto";
-
-    recognition.lang =
-      selectedLanguage === "te-IN"
-        ? "te-IN"
-        : selectedLanguage === "en-IN"
-        ? "en-IN"
-        : "en-US";
-
-    recognition.start();
-    micBtn.classList.add("listening");
-  }
-
-  // Event listeners
-  sendBtn.addEventListener("click", sendMessage);
-
-  input.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      sendMessage();
+    try {
+      recognition.start();
+    } catch {
+      addMessage("assistant", "Microphone is already active.");
     }
   });
 
-  micBtn.addEventListener("click", startListening);
+  // Send button
+  sendBtn.addEventListener("click", send);
 
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      chatHistory = [];
-      localStorage.removeItem("jarvis_memory");
-      chatBox.innerHTML = "";
-    });
+  // Enter to send
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      send();
+    }
+  });
+
+  // Clear chat
+  clearBtn.addEventListener("click", () => {
+    history = [];
+
+    localStorage.removeItem("jarvis_memory");
+
+    render();
+  });
+
+  // Initial system status
+  if (memoryStatus) {
+    memoryStatus.textContent = "LOCAL MEMORY";
   }
 
-  restoreChat();
+  render();
+
 })();
