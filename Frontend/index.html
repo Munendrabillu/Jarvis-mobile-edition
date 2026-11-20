@@ -1,57 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#030b13">
-  <title>J.A.R.V.I.S. | Mobile Edition</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <main class="app">
-    <header class="topbar">
-      <div class="eyebrow">PERSONAL AI ASSISTANT</div>
-      <h1>J.A.R.V.I.S.</h1>
-      <p class="edition">MOBILE EDITION <span class="live-dot"></span></p>
-    </header>
-
-    <section class="core-panel" aria-label="JARVIS core animation">
-      <div class="core">
-        <div class="orbit orbit-one"></div>
-        <div class="orbit orbit-two"></div>
-        <div class="orbit orbit-three"></div>
-        <div class="core-center"><span>J</span></div>
-      </div>
-      <div class="core-label">CORE <strong>ACTIVE</strong></div>
-      <div class="core-subtitle">SYSTEM INITIALIZED</div>
-    </section>
-
-    <section class="status-panel">
-      <div class="section-heading"><span class="status-bars">▥</span> SYSTEM STATUS <span class="line"></span></div>
-      <div class="status-grid">
-        <div class="status-item"><span>AI CORE</span><b class="online">● ONLINE</b></div>
-        <div class="status-item"><span>INTERFACE</span><b class="online">● ACTIVE</b></div>
-        <div class="status-item"><span>VOICE</span><b class="locked">○ NOT CONNECTED</b></div>
-        <div class="status-item"><span>MEMORY</span><b class="locked">○ LOCAL DEMO</b></div>
-      </div>
-    </section>
-
-    <section class="assistant-panel">
-      <div class="section-heading"><span>◈</span> COMMUNICATION LINK <span class="line"></span></div>
-      <div class="chat" id="chat" aria-live="polite">
-        <div class="msg ai"><span class="speaker">J.A.R.V.I.S.</span><p>Systems online. How may I assist you, Boss?</p></div>
-      </div>
-      <form class="input-area" id="chat-form">
-        <input id="msg" type="text" placeholder="Enter a command..." autocomplete="off" aria-label="Message to JARVIS">
-        <button id="send" type="submit">SEND <span>➤</span> </button><button id="mic-btn">🎙️</button>
-      </form>
-      <div class="hint">PRESS ENTER TO SEND</div>
-    </section>
-    <footer>J.A.R.V.I.S. MOBILE INTERFACE <span>•</span> PERSONAL PROJECT</footer>
-  </main>
-  <script src="script.js"></script>
-</body>
-</html>
+<!DOCTYPE html> <html> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width,
+initial-scale=1"> <title>J.A.R.V.I.S</title> <link rel="stylesheet" href="style.css"> </head> <body> <header><
+h1>J.A.R.V.I.S</h1><p>PERSONAL AI ASSISTANT</p></header> <div class="core"> <div class="ring r1"></div> <div c
+lass="ring r2"></div> <div class="center"></div> </div> <p class="core-text">SYSTEM READY</p> <div class="stat
+us"> <h2>SYSTEM DIAGNOSTICS</h2> <div class="row"><span>AI ENGINE</span><b class="on">● OPERATIONAL</b></div>
+<div class="row"><span>CONNECTION</span><b class="on">● ONLINE</b></div> <div class="row"><span>VOICE INTERFAC
+E</span><b class="on">● READY</b></div> <div class="row"><span>LONG-TERM MEMORY</span><b class="on">● ACTIVE</
+b></div> </div> <div class="chat" id="chat"></div> <div class="input-area"> <input id="msg" placeholder="Enter
+a command for J.A.R.V.I.S..."> <button id="send">EXECUTE</button> <button id="mic-btn" aria-label="Activate vo
+ice input">🎙️</button> <button id="cam-btn" aria-label="Analyze image">📷</button> <button id="clear-btn">CLEA
+R MEMORY</button> <input id="img-input" type="file" accept="image/*" style="display:none"> </div> <script src
+="script.js"></script> </body> </html>
