@@ -891,20 +891,107 @@ async function callGemini(prompt) {
         return "Gemini connection error, Boss.";
     }
 }
-
-
-// =====================================================
-// 16. MAIN COMMAND PROCESSOR
-// =====================================================
+// ===== 16. MAIN COMMAND PROCESSOR =====
 
 async function processCommand() {
 
     const text = input.value.trim();
 
-    if (!text) {
-        return;
-    }
+    if (!text) return;
 
     input.value = "";
 
-    add(text, "user
+    add(text, "user");
+
+    remember(text, "user");
+
+    try {
+
+        // Direct tools first
+        const toolResult = await handleTools(text);
+
+        if (toolResult !== null) {
+
+            add(toolResult, "ai");
+            speak(toolResult);
+            remember(toolResult, "model");
+
+            return;
+        }
+
+        // Gemini AI
+        if (!API_KEY) {
+            throw new Error("API key is missing");
+        }
+
+        const answer = await callGeminiRaw(text);
+
+        add(answer, "ai");
+        speak(answer);
+        remember(answer, "model");
+
+    } catch (error) {
+
+        console.error("JARVIS ERROR:", error);
+
+        add(
+            "Connection error: " +
+            error.message,
+            "ai"
+        );
+    }
+}
+// ===== 16. MAIN COMMAND PROCESSOR =====
+
+async function processCommand() {
+
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    input.value = "";
+
+    add(text, "user");
+
+    remember(text, "user");
+
+    try {
+
+        // Direct tools first
+        const toolResult = await handleTools(text);
+
+        if (toolResult !== null) {
+
+            add(toolResult, "ai");
+            speak(toolResult);
+            remember(toolResult, "model");
+
+            return;
+        }
+
+        // Gemini AI
+        if (!API_KEY) {
+            throw new Error("API key is missing");
+        }
+
+        const answer = await callGeminiRaw(text);
+
+        add(answer, "ai");
+        speak(answer);
+        remember(answer, "model");
+
+    } catch (error) {
+
+        console.error("JARVIS ERROR:", error);
+
+        add(
+            "Connection error: " +
+            error.message,
+            "ai"
+        );
+    }
+}
+
+console.log("JARVIS SCRIPT LOADED");
+
+alert("JARVIS JavaScript is working!");
