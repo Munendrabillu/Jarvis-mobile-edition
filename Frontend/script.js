@@ -1,6 +1,6 @@
-// ================= JARVIS FAST AI =================
-// Faster Gemini replies + instant personal memory
-// Replace your complete script.js with this code.
+// =============== JARVIS AI ===============
+// Gemini 3.8 Flash
+// Instant personal memory + chat + mic + camera
 
 const $ = id => document.getElementById(id);
 
@@ -13,33 +13,31 @@ const clear = $("clear-btn");
 const imgInput = $("img-input");
 const coreText = $("core-text");
 
-// ---------- API KEY ----------
+// =============== API KEY ===============
 let API_KEY = localStorage.getItem("jarvis_key");
 
 if (!API_KEY) {
   API_KEY = prompt("Enter your Gemini API Key:");
+
   if (API_KEY) {
-    localStorage.setItem("jarvis_key", API_KEY.trim());
+    API_KEY = API_KEY.trim();
+    localStorage.setItem("jarvis_key", API_KEY);
   }
 }
 
-// ---------- SETTINGS ----------
-const MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash"
-];
+// =============== MODEL ===============
+const MODEL = "gemini-3.8-flash";
 
-const SYSTEM_PROMPT = `
-You are JARVIS, a fast, helpful personal AI assistant.
-Answer clearly, naturally, and concisely.
-Use the conversation context to answer personal questions.
-Do not repeat the user's question unnecessarily.
-`;
+// =============== MEMORY ===============
+let memory = {};
 
-// ---------- MEMORY ----------
-let memory = JSON.parse(
-  localStorage.getItem("jarvis_memory") || "{}"
-);
+try {
+  memory = JSON.parse(
+    localStorage.getItem("jarvis_memory") || "{}"
+  );
+} catch {
+  memory = {};
+}
 
 function saveMemory() {
   localStorage.setItem(
@@ -48,30 +46,34 @@ function saveMemory() {
   );
 }
 
-function rememberFact(key, value) {
-  memory[key] = value;
-  saveMemory();
-}
+// =============== CHAT HISTORY ===============
+let history = [];
 
-function recallFact(key) {
-  return memory[key] || null;
+try {
+  history = JSON.parse(
+    localStorage.getItem("jarvis_history") || "[]"
+  );
+} catch {
+  history = [];
 }
-
-// ---------- CHAT HISTORY ----------
-let history = JSON.parse(
-  localStorage.getItem("jarvis_history") || "[]"
-);
 
 function saveHistory() {
-  // Keep only the latest 8 exchanges for speed
-  history = history.slice(-16);
+  history = history.slice(-12);
+
   localStorage.setItem(
     "jarvis_history",
     JSON.stringify(history)
   );
 }
 
-// ---------- UI ----------
+// =============== STATUS ===============
+function setStatus(text) {
+  if (coreText) {
+    coreText.textContent = text;
+  }
+}
+
+// =============== DISPLAY ===============
 function addMessage(text, sender) {
   const div = document.createElement("div");
 
@@ -84,24 +86,77 @@ function addMessage(text, sender) {
   return div;
 }
 
-function setStatus(text) {
-  if (coreText) coreText.textContent = text;
+// =============== MEMORY STORAGE ===============
+function storeFact(text) {
+  let m;
+
+  m = text.match(
+    /my favou?rite colou?r is\s+(.+)/i
+  );
+
+  if (m) {
+    memory.favourite_colour =
+      m[1].trim().replace(/[.!?]+$/, "");
+
+    saveMemory();
+
+    return "I will remember that your favourite colour is " +
+      memory.favourite_colour + ".";
+  }
+
+  m = text.match(
+    /my favou?rite food is\s+(.+)/i
+  );
+
+  if (m) {
+    memory.favourite_food =
+      m[1].trim().replace(/[.!?]+$/, "");
+
+    saveMemory();
+
+    return "I will remember that your favourite food is " +
+      memory.favourite_food + ".";
+  }
+
+  m = text.match(
+    /my favou?rite movie is\s+(.+)/i
+  );
+
+  if (m) {
+    memory.favourite_movie =
+      m[1].trim().replace(/[.!?]+$/, "");
+
+    saveMemory();
+
+    return "I will remember that your favourite movie is " +
+      memory.favourite_movie + ".";
+  }
+
+  m = text.match(
+    /my name is\s+(.+)/i
+  );
+
+  if (m) {
+    memory.user_name =
+      m[1].trim().replace(/[.!?]+$/, "");
+
+    saveMemory();
+
+    return "I will remember your name.";
+  }
+
+  return null;
 }
 
-function cleanText(text) {
-  return String(text || "").trim();
-}
+// =============== MEMORY RECALL ===============
+function recallFact(text) {
+  const t = text.toLowerCase();
 
-// ---------- INSTANT MEMORY SEARCH ----------
-function memoryAnswer(question) {
-  const q = question.toLowerCase().trim();
-
-  // Favourite colour
   if (
-    q.includes("favourite colour") ||
-    q.includes("favorite color") ||
-    q.includes("favourite color") ||
-    q.includes("favorite colour")
+    t.includes("favourite colour") ||
+    t.includes("favorite color") ||
+    t.includes("favourite color") ||
+    t.includes("favorite colour")
   ) {
     if (memory.favourite_colour) {
       return "Your favourite colour is " +
@@ -109,10 +164,9 @@ function memoryAnswer(question) {
     }
   }
 
-  // Favourite food
   if (
-    q.includes("favourite food") ||
-    q.includes("favorite food")
+    t.includes("favourite food") ||
+    t.includes("favorite food")
   ) {
     if (memory.favourite_food) {
       return "Your favourite food is " +
@@ -120,10 +174,9 @@ function memoryAnswer(question) {
     }
   }
 
-  // Favourite movie
   if (
-    q.includes("favourite movie") ||
-    q.includes("favorite movie")
+    t.includes("favourite movie") ||
+    t.includes("favorite movie")
   ) {
     if (memory.favourite_movie) {
       return "Your favourite movie is " +
@@ -131,10 +184,10 @@ function memoryAnswer(question) {
     }
   }
 
-  // Favourite name / nickname
   if (
-    q.includes("my name") ||
-    q.includes("what do you call me")
+    t.includes("what is my name") ||
+    t.includes("what's my name") ||
+    t.includes("who am i")
   ) {
     if (memory.user_name) {
       return "Your name is " + memory.user_name + ".";
@@ -144,138 +197,75 @@ function memoryAnswer(question) {
   return null;
 }
 
-// ---------- STORE USER FACTS ----------
-function storeFact(text) {
-  const t = text.trim();
-
-  let match;
-
-  match = t.match(
-    /my favou?rite colou?r is\s+(.+)/i
-  );
-
-  if (match) {
-    rememberFact(
-      "favourite_colour",
-      match[1].trim().replace(/[.!?]+$/, "")
-    );
-
-    return "I will remember that your favourite colour is " +
-      memory.favourite_colour + ".";
-  }
-
-  match = t.match(
-    /my favou?rite food is\s+(.+)/i
-  );
-
-  if (match) {
-    rememberFact(
-      "favourite_food",
-      match[1].trim().replace(/[.!?]+$/, "")
-    );
-
-    return "I will remember your favourite food is " +
-      memory.favourite_food + ".";
-  }
-
-  match = t.match(
-    /my favou?rite movie is\s+(.+)/i
-  );
-
-  if (match) {
-    rememberFact(
-      "favourite_movie",
-      match[1].trim().replace(/[.!?]+$/, "")
-    );
-
-    return "I will remember your favourite movie is " +
-      memory.favourite_movie + ".";
-  }
-
-  match = t.match(
-    /my name is\s+(.+)/i
-  );
-
-  if (match) {
-    rememberFact(
-      "user_name",
-      match[1].trim().replace(/[.!?]+$/, "")
-    );
-
-    return "Nice to meet you. I will remember your name.";
-  }
-
-  return null;
-}
-
-// ---------- LOCAL TOOLS ----------
+// =============== LOCAL TOOLS ===============
 async function handleTools(text) {
   const t = text.toLowerCase().trim();
 
-  // Time
+  // TIME
   if (/\btime\b/.test(t)) {
-    return "The current time is " +
+    return "The time is " +
       new Date().toLocaleTimeString();
   }
 
-  // Date
+  // DATE
   if (
     t.includes("today's date") ||
-    t.includes("what date") ||
+    t.includes("what date is it") ||
     t === "date"
   ) {
     return "Today is " +
       new Date().toLocaleDateString();
   }
 
-  // Google search
+  // GOOGLE SEARCH
   if (
     t.startsWith("search ") ||
     t.startsWith("google ")
   ) {
-    const query = text.replace(/^(search|google)\s+/i, "");
+    const q = text.replace(/^(search|google)\s+/i, "");
 
     window.open(
       "https://www.google.com/search?q=" +
-      encodeURIComponent(query),
+      encodeURIComponent(q),
       "_blank"
     );
 
-    return "Searching Google for " + query;
+    return "Searching Google for " + q;
   }
 
-  // YouTube
+  // YOUTUBE
   if (t.startsWith("youtube ")) {
-    const query = text.replace(/^youtube\s+/i, "");
+    const q = text.replace(/^youtube\s+/i, "");
 
     window.open(
       "https://www.youtube.com/results?search_query=" +
-      encodeURIComponent(query),
+      encodeURIComponent(q),
       "_blank"
     );
 
-    return "Searching YouTube for " + query;
+    return "Searching YouTube for " + q;
   }
 
-  // Wikipedia
+  // WIKIPEDIA
   if (t.startsWith("wiki ")) {
-    const query = text.replace(/^wiki\s+/i, "");
+    const q = text.replace(/^wiki\s+/i, "");
 
     window.open(
       "https://en.wikipedia.org/wiki/Special:Search?search=" +
-      encodeURIComponent(query),
+      encodeURIComponent(q),
       "_blank"
     );
 
-    return "Searching Wikipedia for " + query;
+    return "Searching Wikipedia for " + q;
   }
 
-  // Calculator
+  // CALCULATOR
   if (t.startsWith("calculate ")) {
-    const expression = text.replace(/^calculate\s+/i, "");
+    const expression = text.replace(
+      /^calculate\s+/i, ""
+    );
 
-    // Safe, limited arithmetic parser
-    if (/^[\d\s()+\-*/.%]+$/.test(expression)) {
+    if (/^[0-9+\-*/().%\s]+$/.test(expression)) {
       try {
         const result = Function(
           '"use strict";return (' +
@@ -283,46 +273,38 @@ async function handleTools(text) {
         )();
 
         if (Number.isFinite(result)) {
-          return "The answer is " + result;
+          return "Answer: " + result;
         }
-      } catch (e) {
-        return "I couldn't calculate that expression.";
+      } catch {
+        return "Invalid calculation.";
       }
     }
 
-    return "Please enter a valid mathematical expression.";
+    return "Please enter a valid calculation.";
   }
 
   return null;
 }
 
-// ---------- FAST GEMINI REQUEST ----------
+// =============== GEMINI 3.8 ===============
 async function askGemini(question, imageData = null) {
   if (!API_KEY) {
-    return "Please enter your Gemini API key.";
+    return "API key missing. Reload and enter your API key.";
   }
 
-  // Short context = faster responses
-  const recentHistory = history.slice(-6);
+  const contents = history.slice(-8).map(item => ({
+    role: item.role,
+    parts: [{ text: item.text }]
+  }));
 
-  const contents = [];
-
-  for (const item of recentHistory) {
-    contents.push({
-      role: item.role,
-      parts: [{ text: item.text }]
-    });
-  }
-
-  const parts = [];
-
-  parts.push({
+  const parts = [{
     text:
-      SYSTEM_PROMPT +
-      "\nKnown personal facts: " +
+      "You are JARVIS, a smart, fast personal AI assistant. " +
+      "Answer naturally and accurately, with concise answers. " +
+      "Remember and use the following personal memory: " +
       JSON.stringify(memory) +
-      "\nUser message: " + question
-  });
+      ". User says: " + question
+  }];
 
   if (imageData) {
     parts.push({
@@ -338,106 +320,86 @@ async function askGemini(question, imageData = null) {
     parts: parts
   });
 
-  let lastError = "";
+  try {
+    setStatus("CONNECTING");
 
-  for (const model of MODELS) {
-    try {
-      setStatus("CONNECTING " + model);
+    const controller = new AbortController();
 
-      const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      25000
+    );
 
-      const timeout = setTimeout(
-        () => controller.abort(),
-        20000
-      );
-
-      const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/" +
-        model +
-        ":generateContent?key=" +
-        encodeURIComponent(API_KEY),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            contents: contents,
-            generationConfig: {
-              temperature: 0.4,
-              maxOutputTokens: 300
-            }
-          }),
-          signal: controller.signal
-        }
-      );
-
-      clearTimeout(timeout);
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        lastError =
-          data.error?.message ||
-          "Gemini request failed.";
-
-        // Move to the next model if the model is unavailable
-        if (
-          response.status === 404 ||
-          response.status === 400
-        ) {
-          continue;
-        }
-
-        // Don't waste time with long retry loops
-        if (
-          response.status === 429 ||
-          response.status === 503
-        ) {
-          return "Gemini is busy right now. Please try again in a few seconds.";
-        }
-
-        return "Gemini error: " + lastError;
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/" +
+      MODEL +
+      ":generateContent?key=" +
+      encodeURIComponent(API_KEY),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: contents,
+          generationConfig: {
+            maxOutputTokens: 512
+          }
+        }),
+        signal: controller.signal
       }
+    );
 
-      const answer =
-        data.candidates?.[0]?.content?.parts
-          ?.map(p => p.text || "")
-          .join("")
-          .trim();
+    clearTimeout(timeoutId);
 
-      if (answer) {
-        return answer;
-      }
+    const data = await response.json();
 
-      lastError = "Gemini returned an empty response.";
+    if (!response.ok) {
+      const err = data.error?.message ||
+        "Gemini API request failed.";
 
-    } catch (error) {
-      lastError = error.name === "AbortError"
-        ? "Request timed out."
-        : error.message;
+      return "Gemini error (" +
+        response.status + "): " + err;
     }
+
+    const answer =
+      data.candidates?.[0]?.content?.parts
+        ?.map(p => p.text || "")
+        .join("")
+        .trim();
+
+    if (!answer) {
+      return "Gemini returned an empty response. Please try again.";
+    }
+
+    return answer;
+
+  } catch (error) {
+    if (error.name === "AbortError") {
+      return "Gemini took too long to respond. Please try again.";
+    }
+
+    return "Connection failed: " + error.message;
   }
-
-  return "Connection failed. " + lastError;
 }
 
-// ---------- SPEECH OUTPUT ----------
+// =============== SPEECH ===============
 function speak(text) {
-  if (!("speechSynthesis" in window)) return;
+  if (!window.speechSynthesis) return;
 
-  window.speechSynthesis.cancel();
+  speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 1.05;
-  utterance.pitch = 1;
+  const speech = new SpeechSynthesisUtterance(text);
 
-  window.speechSynthesis.speak(utterance);
+  speech.rate = 1.05;
+  speech.pitch = 1;
+
+  speechSynthesis.speak(speech);
 }
 
-// ---------- MAIN SEND FUNCTION ----------
+// =============== MAIN ===============
 async function sendMessage(text, imageData = null) {
-  text = cleanText(text);
+  text = (text || "").trim();
 
   if (!text && !imageData) return;
 
@@ -447,34 +409,34 @@ async function sendMessage(text, imageData = null) {
 
   msg.value = "";
 
-  setStatus("PROCESSING");
+  setStatus("THINKING");
 
   try {
     let answer = null;
 
-    // 1. Save information locally immediately
+    // Save personal fact
     if (text) {
       answer = storeFact(text);
     }
 
-    // 2. Handle local tools
+    // Recall memory instantly
+    if (!answer && text) {
+      answer = recallFact(text);
+    }
+
+    // Local tools
     if (!answer && text) {
       answer = await handleTools(text);
     }
 
-    // 3. Memory search - instant response
-    if (!answer && text) {
-      answer = memoryAnswer(text);
-    }
-
-    // 4. Gemini only when needed
+    // Gemini
     if (!answer) {
       answer = await askGemini(text, imageData);
     }
 
     addMessage(answer, "assistant");
 
-    // Only send normal conversation to history
+    // Store only ordinary conversations
     if (text) {
       history.push({
         role: "user",
@@ -496,68 +458,63 @@ async function sendMessage(text, imageData = null) {
       "Error: " + error.message,
       "assistant"
     );
-  } finally {
-    setStatus("ONLINE");
   }
+
+  setStatus("ONLINE");
 }
 
-// ---------- SEND BUTTON ----------
+// =============== SEND BUTTON ===============
 if (send) {
   send.addEventListener("click", () => {
     sendMessage(msg.value);
   });
 }
 
-// ---------- ENTER KEY ----------
+// =============== ENTER KEY ===============
 if (msg) {
   msg.addEventListener("keydown", event => {
-    if (
-      event.key === "Enter" &&
-      !event.shiftKey
-    ) {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       sendMessage(msg.value);
     }
   });
 }
 
-// ---------- MICROPHONE ----------
+// =============== MICROPHONE ===============
 if (mic) {
   mic.addEventListener("click", () => {
-    const SpeechRecognition =
+    const SR =
       window.SpeechRecognition ||
       window.webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
+    if (!SR) {
       addMessage(
-        "Voice recognition is not supported in this browser.",
+        "Speech recognition is not supported here.",
         "assistant"
       );
       return;
     }
 
-    const recognition = new SpeechRecognition();
+    const recognition = new SR();
 
     recognition.lang = "en-IN";
     recognition.continuous = false;
-    recognition.interimResults = false;
 
     recognition.onstart = () => {
       setStatus("LISTENING");
     };
 
     recognition.onresult = event => {
-      const transcript =
+      const speech =
         event.results[0][0].transcript;
 
-      msg.value = transcript;
-      sendMessage(transcript);
+      msg.value = speech;
+      sendMessage(speech);
     };
 
     recognition.onerror = () => {
-      setStatus("ONLINE");
       addMessage(
-        "Microphone error. Please check microphone permission.",
+        "Microphone error. Check browser permission.",
         "assistant"
       );
     };
@@ -570,7 +527,7 @@ if (mic) {
   });
 }
 
-// ---------- CAMERA / IMAGE ----------
+// =============== CAMERA ===============
 if (cam && imgInput) {
   cam.addEventListener("click", () => {
     imgInput.click();
@@ -578,31 +535,34 @@ if (cam && imgInput) {
 }
 
 if (imgInput) {
-  imgInput.addEventListener("change", async event => {
+  imgInput.addEventListener("change", event => {
     const file = event.target.files[0];
 
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      addMessage("Please select an image.", "assistant");
+      addMessage(
+        "Please select an image file.",
+        "assistant"
+      );
       return;
     }
 
     const reader = new FileReader();
 
-    reader.onload = async () => {
-      const base64 = reader.result.split(",")[1];
+    reader.onload = () => {
+      const data = reader.result.split(",");
 
       const imageData = {
         mimeType: file.type,
-        data: base64
+        data: data[1]
       };
 
       const question =
         msg.value.trim() ||
         "Describe this image.";
 
-      await sendMessage(question, imageData);
+      sendMessage(question, imageData);
     };
 
     reader.readAsDataURL(file);
@@ -611,24 +571,25 @@ if (imgInput) {
   });
 }
 
-// ---------- CLEAR CHAT ----------
+// =============== CLEAR CHAT ===============
 if (clear) {
   clear.addEventListener("click", () => {
     history = [];
+
     localStorage.removeItem("jarvis_history");
 
     chat.innerHTML = "";
 
-    setStatus("ONLINE");
-
     addMessage(
-      "Chat cleared. Your saved memories are preserved.",
+      "Chat cleared. My saved memories remain.",
       "assistant"
     );
+
+    setStatus("ONLINE");
   });
 }
 
-// ---------- RESTORE CHAT ----------
+// =============== RESTORE CHAT ===============
 history.forEach(item => {
   addMessage(
     item.text,
@@ -636,7 +597,7 @@ history.forEach(item => {
   );
 });
 
-// ---------- START ----------
+// =============== READY ===============
 setStatus("ONLINE");
 
-console.log("JARVIS FAST AI READY");
+console.log("JARVIS GEMINI 3.8 READY");
