@@ -1,15 +1,93 @@
-<!DOCTYPE html> <html>
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,
-initial-scale=1"> <title>J.A.R.V.I.S</title> <link rel="stylesheet" href="style.css"> </head> <body> <header><
-h1>J.A.R.V.I.S</h1><p>PERSONAL AI ASSISTANT</p></header> <div class="core"> <div class="ring r1"></div> <div c
-lass="ring r2"></div> <div class="center"></div> </div> <p class="core-text">SYSTEM READY</p> <div class="stat
-us"> <h2>SYSTEM DIAGNOSTICS</h2> <div class="row"><span>AI ENGINE</span><b class="on">● OPERATIONAL</b></div>
-<div class="row"><span>CONNECTION</span><b class="on">● ONLINE</b></div> <div class="row"><span>VOICE INTERFAC
-E</span><b class="on">● READY</b></div> <div class="row"><span>LONG-TERM MEMORY</span><b class="on">● ACTIVE</
-b></div> </div> <div class="chat" id="chat"></div> <div class="input-area"> <input id="msg" placeholder="Enter
-a command for J.A.R.V.I.S..."> <button id="send">EXECUTE</button> <button id="mic-btn" aria-label="Activate vo
-ice input">🎙️</button> <button id="cam-btn" aria-label="Analyze image">📷</button> <button id="clear-btn">CLEA
-R MEMORY</button> <input id="img-input" type="file" accept="image/*" style="display:none"> </div> <script src
-="script.js"></script> </body> </html>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J.A.R.V.I.S. AI Assistant</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="header">
+      <h1>J.A.R.V.I.S.</h1>
+      <p>JUST A RATHER VERY INTELLIGENT SYSTEM</p>
+    </header>
+
+    <!-- Reactor / Visual -->
+    <div class="reactor-container">
+      <div class="reactor">
+        <div class="reactor-core"></div>
+      </div>
+    </div>
+
+    <!-- Status Panel -->
+    <div class="status-panel">
+      <div class="status-item">
+        <span class="status-label">AI STATUS</span>
+        <span id="ai-status">ONLINE</span>
+      </div>
+
+      <div class="status-item">
+        <span class="status-label">VOICE</span>
+        <span id="voice-status">READY</span>
+      </div>
+
+      <div class="status-item">
+        <span class="status-label">NETWORK</span>
+        <span id="network-status">CONNECTED</span>
+      </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-container">
+
+      <div class="chat-header">
+        <h2>CONVERSATION</h2>
+        <button id="clear-chat" type="button">CLEAR</button>
+      </div>
+
+      <div id="chat-messages" class="chat-messages">
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-area">
+
+        <select id="language" title="Select language">
+          <option value="auto">Auto / English</option>
+          <option value="en-IN">English</option>
+          <option value="te-IN">తెలుగు</option>
+        </select>
+
+        <input
+          type="text"
+          id="message-input"
+          placeholder="Talk to J.A.R.V.I.S..."
+          autocomplete="off"
+        >
+
+        <button id="mic-btn" type="button" title="Voice input">
+          🎤
+        </button>
+
+        <button id="send-btn" type="button">
+          SEND
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>J.A.R.V.I.S. AI SYSTEM &copy; 2026</p>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
