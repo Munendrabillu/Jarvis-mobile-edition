@@ -14,7 +14,7 @@ if (!API_KEY) {
 }
 
 // Use a supported Gemini model
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.8-flash";
 
 // ======================================================
 // 2. ELEMENTS
