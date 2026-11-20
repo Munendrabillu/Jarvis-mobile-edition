@@ -1,3 +1,4 @@
+
 /* ===== J.A.R.V.I.S. THEME ===== */
 
 * {
@@ -148,10 +149,14 @@ header p {
     text-align: right;
 }
 
+.row b.off {
+    color: #ff5555;
+}
+
 /* ===== CHAT ===== */
 
 .chat {
-    height: 300px;
+    height: 350px;
     overflow-y: auto;
     border: 1px solid #007777;
     border-radius: 15px;
@@ -159,6 +164,7 @@ header p {
     padding: 15px;
     margin: 30px 0;
     box-shadow: 0 0 15px #003333;
+    scroll-behavior: smooth;
 }
 
 .message {
@@ -167,6 +173,7 @@ header p {
     border-radius: 10px;
     line-height: 1.6;
     overflow-wrap: anywhere;
+    white-space: pre-wrap;
 }
 
 .user-message {
@@ -229,6 +236,11 @@ button:hover {
     box-shadow: 0 0 15px var(--cyan);
 }
 
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 #clear-btn {
     min-width: 120px;
 }
@@ -269,7 +281,7 @@ button:hover {
     }
 
     .chat {
-        height: 300px;
+        height: 350px;
     }
 
     button {
