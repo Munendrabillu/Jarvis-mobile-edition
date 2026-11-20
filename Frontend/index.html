@@ -1,18 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Basic page settings -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Page title -->
     <title>J.A.R.V.I.S - Personal AI Assistant</title>
 
-    <!-- Connect CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
     <!-- Header -->
@@ -21,21 +16,20 @@
         <p>PERSONAL AI ASSISTANT</p>
     </header>
 
-    <!-- AI Core Animation -->
-    <div class="core" aria-label="JARVIS animated core">
-
+    <!-- AI Core -->
+    <div class="core">
         <div class="ring r1"></div>
         <div class="ring r2"></div>
         <div class="center"></div>
-
     </div>
 
     <!-- Core Status -->
-    <p class="core-text" id="core-text">SYSTEM READY</p>
+    <p class="core-text" id="core-text">
+        SYSTEM READY
+    </p>
 
     <!-- System Diagnostics -->
-    <section class="status" aria-label="System diagnostics">
-
+    <section class="status">
         <h2>SYSTEM DIAGNOSTICS</h2>
 
         <div class="row">
@@ -57,12 +51,10 @@
             <span>LONG-TERM MEMORY</span>
             <b class="on">● ACTIVE</b>
         </div>
-
     </section>
 
     <!-- Chat Display -->
     <main class="chat" id="chat" aria-live="polite">
-
     </main>
 
     <!-- Command Input -->
@@ -77,37 +69,35 @@
             aria-label="Enter your command"
         >
 
-        <!-- Send Command -->
+        <!-- Execute -->
         <button type="button" id="send">
             EXECUTE
         </button>
 
-        <!-- Voice Input -->
+        <!-- Voice -->
         <button
             type="button"
             id="mic-btn"
             aria-label="Activate voice input"
-            title="Voice input"
         >
             🎙️
         </button>
 
-        <!-- Image Analysis -->
+        <!-- Image -->
         <button
             type="button"
             id="cam-btn"
             aria-label="Analyze image"
-            title="Upload image"
         >
             📷
         </button>
 
-        <!-- Clear Memory -->
+        <!-- Clear -->
         <button type="button" id="clear-btn">
             CLEAR MEMORY
         </button>
 
-        <!-- Hidden Image Input -->
+        <!-- Image Input -->
         <input
             type="file"
             id="img-input"
