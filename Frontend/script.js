@@ -17,8 +17,8 @@ if (!API_KEY) {
 }
 
 const MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite"
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite"
 ];
 
 // ===== 2. MEMORY SYSTEM =====
