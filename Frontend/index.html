@@ -1,150 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Basic page settings -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>J.A.R.V.I.S</title>
 
-    <!-- Page title -->
-    <title>J.A.R.V.I.S - Personal AI Assistant</title>
-
-
-    <!-- Connect CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 
-
 <body>
 
-
-    <!-- Header -->
+    <!-- HEADER -->
     <header>
         <h1>J.A.R.V.I.S</h1>
         <p>PERSONAL AI ASSISTANT</p>
     </header>
 
-
-    <!-- AI Core Animation -->
-    <div class="core" aria-label="JARVIS animated core">
-
-
+    <!-- JARVIS CORE ANIMATION -->
+    <div class="core">
         <div class="ring r1"></div>
         <div class="ring r2"></div>
         <div class="center"></div>
-
-
     </div>
 
+    <p class="core-text">SYSTEM READY</p>
 
-    <!-- Core Status -->
-    <p class="core-text" id="core-text">SYSTEM READY</p>
-
-
-    <!-- System Diagnostics -->
-    <section class="status" aria-label="System diagnostics">
-
-
+    <!-- SYSTEM DIAGNOSTICS -->
+    <div class="status">
         <h2>SYSTEM DIAGNOSTICS</h2>
-
 
         <div class="row">
             <span>AI ENGINE</span>
             <b class="on">● OPERATIONAL</b>
         </div>
 
-
         <div class="row">
             <span>CONNECTION</span>
             <b class="on">● ONLINE</b>
         </div>
-
 
         <div class="row">
             <span>VOICE INTERFACE</span>
             <b class="on">● READY</b>
         </div>
 
-
         <div class="row">
             <span>LONG-TERM MEMORY</span>
             <b class="on">● ACTIVE</b>
         </div>
+    </div>
 
+    <!-- CHAT AREA -->
+    <div class="chat" id="chat"></div>
 
-    </section>
-
-
-    <!-- Chat Display -->
-    <main class="chat" id="chat" aria-live="polite">
-
-
-    </main>
-
-
-    <!-- Command Input -->
+    <!-- INPUT AREA -->
     <div class="input-area">
 
-
-        <!-- Text Input -->
         <input
-            type="text"
             id="msg"
+            type="text"
             placeholder="Enter a command for J.A.R.V.I.S..."
-            autocomplete="off"
-            aria-label="Enter your command"
         >
 
+        <button id="send">EXECUTE</button>
 
-        <!-- Send Command -->
-        <button type="button" id="send">
-            EXECUTE
-        </button>
-
-
-        <!-- Voice Input -->
-        <button
-            type="button"
-            id="mic-btn"
-            aria-label="Activate voice input"
-            title="Voice input"
-        >
+        <button id="mic-btn" aria-label="Activate voice input">
             🎙️
         </button>
 
-
-        <!-- Image Analysis -->
-        <button
-            type="button"
-            id="cam-btn"
-            aria-label="Analyze image"
-            title="Upload image"
-        >
+        <button id="cam-btn" aria-label="Analyze image">
             📷
         </button>
 
-
-        <!-- Clear Memory -->
-        <button type="button" id="clear-btn">
+        <button id="clear-btn">
             CLEAR MEMORY
         </button>
 
-
-        <!-- Hidden Image Input -->
         <input
-            type="file"
             id="img-input"
+            type="file"
             accept="image/*"
-            hidden
+            style="display: none;"
         >
-
 
     </div>
 
-
-    <!-- JavaScript -->
+    <!-- JAVASCRIPT -->
     <script src="script.js"></script>
-
 
 </body>
 </html>
