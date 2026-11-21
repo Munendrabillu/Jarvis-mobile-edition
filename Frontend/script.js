@@ -18,8 +18,8 @@ if (!API_KEY) {
 
 // Supported model fallback list
 const MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite"
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite"
 ];
 
 // ===== 2. MEMORY SYSTEM =====
