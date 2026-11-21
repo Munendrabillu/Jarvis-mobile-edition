@@ -1,15 +1,22 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Basic page settings -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+
+    <!-- Page title -->
     <title>J.A.R.V.I.S - Personal AI Assistant</title>
 
+
+    <!-- Connect CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
+
+
 <body>
+
 
     <!-- Header -->
     <header>
@@ -17,47 +24,69 @@
         <p>PERSONAL AI ASSISTANT</p>
     </header>
 
-    <!-- AI Core -->
-    <div class="core">
+
+    <!-- AI Core Animation -->
+    <div class="core" aria-label="JARVIS animated core">
+
+
         <div class="ring r1"></div>
         <div class="ring r2"></div>
         <div class="center"></div>
+
+
     </div>
+
 
     <!-- Core Status -->
     <p class="core-text" id="core-text">SYSTEM READY</p>
 
-    <!-- Diagnostics -->
-    <section class="status">
+
+    <!-- System Diagnostics -->
+    <section class="status" aria-label="System diagnostics">
+
+
         <h2>SYSTEM DIAGNOSTICS</h2>
+
 
         <div class="row">
             <span>AI ENGINE</span>
-            <b id="ai-status" class="on">● READY</b>
+            <b class="on">● OPERATIONAL</b>
         </div>
+
 
         <div class="row">
             <span>CONNECTION</span>
-            <b id="connection-status" class="on">● ONLINE</b>
+            <b class="on">● ONLINE</b>
         </div>
+
 
         <div class="row">
             <span>VOICE INTERFACE</span>
-            <b id="voice-status" class="on">● READY</b>
+            <b class="on">● READY</b>
         </div>
+
 
         <div class="row">
             <span>LONG-TERM MEMORY</span>
-            <b id="memory-status" class="on">● ACTIVE</b>
+            <b class="on">● ACTIVE</b>
         </div>
+
+
     </section>
 
-    <!-- Chat -->
-    <main class="chat" id="chat" aria-live="polite"></main>
 
-    <!-- Input -->
+    <!-- Chat Display -->
+    <main class="chat" id="chat" aria-live="polite">
+
+
+    </main>
+
+
+    <!-- Command Input -->
     <div class="input-area">
 
+
+        <!-- Text Input -->
         <input
             type="text"
             id="msg"
@@ -66,32 +95,56 @@
             aria-label="Enter your command"
         >
 
-        <button type="button" id="send">EXECUTE</button>
 
-        <button type="button" id="mic-btn" aria-label="Voice input">
+        <!-- Send Command -->
+        <button type="button" id="send">
+            EXECUTE
+        </button>
+
+
+        <!-- Voice Input -->
+        <button
+            type="button"
+            id="mic-btn"
+            aria-label="Activate voice input"
+            title="Voice input"
+        >
             🎙️
         </button>
 
-        <button type="button" id="cam-btn" aria-label="Analyze image">
+
+        <!-- Image Analysis -->
+        <button
+            type="button"
+            id="cam-btn"
+            aria-label="Analyze image"
+            title="Upload image"
+        >
             📷
         </button>
 
+
+        <!-- Clear Memory -->
         <button type="button" id="clear-btn">
             CLEAR MEMORY
         </button>
 
+
+        <!-- Hidden Image Input -->
         <input
             type="file"
             id="img-input"
             accept="image/*"
-            capture="environment"
             hidden
         >
 
+
     </div>
+
 
     <!-- JavaScript -->
     <script src="script.js"></script>
+
 
 </body>
 </html>
