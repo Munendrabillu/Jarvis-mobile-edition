@@ -1,9 +1,10 @@
-/* =====================================================
-   J.A.R.V.I.S. - PERSONAL AI ASSISTANT
-   AI + MEMORY + VOICE + IMAGE ANALYSIS
-===================================================== */
+// ======================================================
+// J.A.R.V.I.S. PERSONAL AI ASSISTANT
+// GEMINI + MEMORY + VOICE + CAMERA + TOOLS
+// ======================================================
 
-// ===== 1. API KEY =====
+
+// ===== 1. API KEY & MODELS =====
 
 let API_KEY = localStorage.getItem("jarvis_key");
 
@@ -16,11 +17,11 @@ if (!API_KEY) {
     }
 }
 
-// Supported model fallback list
 const MODELS = [
     "gemini-3.5-flash",
     "gemini-3.5-flash-lite"
 ];
+
 
 // ===== 2. MEMORY SYSTEM =====
 
@@ -45,6 +46,7 @@ function saveMemory() {
     );
 }
 
+
 // ===== 3. HTML ELEMENTS =====
 
 const chat = document.getElementById("chat");
@@ -55,10 +57,12 @@ const clearBtn = document.getElementById("clear-btn");
 const camBtn = document.getElementById("cam-btn");
 const imgInput = document.getElementById("img-input");
 
-// ===== 4. DISPLAY SAVED MEMORY =====
+
+// ===== 4. CHAT DISPLAY =====
 
 function add(text, type) {
-    if (!chat) return;
+
+    if (!chat) return null;
 
     const div = document.createElement("div");
 
@@ -71,15 +75,234 @@ function add(text, type) {
     return div;
 }
 
+
+// Restore saved messages
+
 MEMORY.forEach((m) => {
+
     add(
         (m.role === "user" ? "YOU: " : "J.A.R.V.I.S: ") +
         m.text,
         m.role === "user" ? "user" : "ai"
     );
+
 });
 
-// ===== 5. GEMINI AI ENGINE =====
+
+// ===== 5. TOOLS (THE HANDS) =====
+// Time, Weather, Timer, Translate, YouTube
+
+async function handleTools(text) {
+
+    const t = text.toLowerCase();
+
+
+    // ----- 1. TIME -----
+
+    if (
+        /\btime\b/.test(t) ||
+        t.includes("టైమ్") ||
+        t.includes("సమయం")
+    ) {
+
+        return "The time is " +
+            new Date().toLocaleTimeString() +
+            ", Boss.";
+    }
+
+
+    // ----- 2. WEATHER -----
+
+    if (
+        t.includes("weather") ||
+        t.includes("వాతావరణం")
+    ) {
+
+        return await new Promise((resolve) => {
+
+            if (!navigator.geolocation) {
+                resolve("Geolocation is not supported, Boss.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+
+                    try {
+
+                        const latitude =
+                            position.coords.latitude;
+
+                        const longitude =
+                            position.coords.longitude;
+
+                        const url =
+                            "https://api.open-meteo.com/v1/forecast" +
+                            "?latitude=" + latitude +
+                            "&longitude=" + longitude +
+                            "&current=temperature_2m";
+
+                        const response = await fetch(url);
+
+                        if (!response.ok) {
+                            throw new Error("Weather request failed.");
+                        }
+
+                        const data = await response.json();
+
+                        const temperature =
+                            data.current.temperature_2m;
+
+                        resolve(
+                            "It is " +
+                            temperature +
+                            " degrees Celsius now, Boss."
+                        );
+
+                    } catch (error) {
+
+                        resolve(
+                            "Weather service error, Boss."
+                        );
+                    }
+                },
+
+                () => {
+
+                    resolve(
+                        "I need location permission for weather, Boss."
+                    );
+
+                },
+
+                {
+                    enableHighAccuracy: false,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+
+            );
+
+        });
+    }
+
+
+    // ----- 3. TIMER -----
+
+    const timerMatch = t.match(
+        /\b(\d+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)\b/i
+    );
+
+    if (
+        (t.includes("timer") || t.includes("టైమర్")) &&
+        timerMatch
+    ) {
+
+        const amount = parseInt(timerMatch[1], 10);
+
+        const unit = timerMatch[2].toLowerCase();
+
+        const factor =
+            /^(hours?|hrs?)/.test(unit)
+                ? 3600000
+                : /^(seconds?|secs?)/.test(unit)
+                    ? 1000
+                    : 60000;
+
+        const duration = amount * factor;
+
+        setTimeout(() => {
+
+            speak(
+                "Timer finished! " +
+                amount + " " + unit + " completed, Boss."
+            );
+
+            add(
+                "SYSTEM: Timer finished!",
+                "ai"
+            );
+
+        }, duration);
+
+        return "Timer set for " +
+            amount + " " + unit +
+            ", Boss.";
+    }
+
+
+    // ----- 4. TRANSLATE TO TELUGU -----
+
+    if (
+        t.startsWith("translate") ||
+        t.includes("translate this")
+    ) {
+
+        const query = text
+            .replace(/^translate\s+(this\s+)?/i, "")
+            .trim() || "hello";
+
+        try {
+
+            const url =
+                "https://api.mymemory.translated.net/get?q=" +
+                encodeURIComponent(query) +
+                "&langpair=en|te";
+
+            const response = await fetch(url);
+
+            const data = await response.json();
+
+            if (
+                !data.responseData ||
+                !data.responseData.translatedText
+            ) {
+                return "Translation unavailable, Boss.";
+            }
+
+            return "In Telugu: " +
+                data.responseData.translatedText;
+
+        } catch (error) {
+
+            return "Translate error, Boss.";
+        }
+    }
+
+
+    // ----- 5. YOUTUBE SEARCH -----
+
+    if (
+        t.startsWith("play ") ||
+        t.startsWith("youtube ")
+    ) {
+
+        const query = text
+            .replace(/^play\s+/i, "")
+            .replace(/^youtube\s+(search\s+)?/i, "")
+            .trim();
+
+        if (query) {
+
+            const url =
+                "https://www.youtube.com/results?search_query=" +
+                encodeURIComponent(query);
+
+            window.open(url, "_blank");
+
+            return "Searching YouTube for " +
+                query + ", Boss.";
+        }
+    }
+
+
+    // No tool matched
+
+    return null;
+}
+
+
+// ===== 6. GEMINI AI ENGINE =====
 
 async function callGemini(promptText) {
 
@@ -112,30 +335,35 @@ async function callGemini(promptText) {
                 encodeURIComponent(API_KEY);
 
             const response = await fetch(url, {
+
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 body: JSON.stringify({
+
                     contents: contents,
+
                     generationConfig: {
                         temperature: 0.7,
                         maxOutputTokens: 2048
                     }
+
                 })
+
             });
 
             const data = await response.json();
 
             if (!response.ok) {
 
-                const message =
+                lastError = new Error(
                     data?.error?.message ||
-                    "API request failed.";
+                    "API request failed."
+                );
 
-                lastError = new Error(message);
-
-                // Try next model for temporary or model errors
                 if (
                     response.status === 429 ||
                     response.status === 503 ||
@@ -153,7 +381,10 @@ async function callGemini(promptText) {
                     .join("");
 
             if (!reply) {
-                throw new Error("AI returned an empty response.");
+
+                throw new Error(
+                    "AI returned an empty response."
+                );
             }
 
             return reply;
@@ -174,10 +405,12 @@ async function callGemini(promptText) {
         }
     }
 
-    throw lastError || new Error("All AI models failed.");
+    throw lastError ||
+        new Error("All AI models failed.");
 }
 
-// ===== 6. CHAT WITH JARVIS =====
+
+// ===== 7. ASK JARVIS (TOOLS + GEMINI) =====
 
 async function askGemini(promptText) {
 
@@ -187,6 +420,39 @@ async function askGemini(promptText) {
     );
 
     try {
+
+        // First check if a tool can handle the command
+
+        const toolReply = await handleTools(promptText);
+
+        // If a tool handled the command, don't call Gemini
+
+        if (toolReply !== null) {
+
+            loading.innerText =
+                "J.A.R.V.I.S: " + toolReply;
+
+            MEMORY.push({
+                role: "user",
+                text: promptText
+            });
+
+            MEMORY.push({
+                role: "model",
+                text: toolReply
+            });
+
+            MEMORY = MEMORY.slice(-40);
+
+            saveMemory();
+
+            speak(toolReply);
+
+            return;
+        }
+
+
+        // Otherwise ask Gemini
 
         const reply = await callGemini(promptText);
 
@@ -200,25 +466,27 @@ async function askGemini(promptText) {
             text: reply
         });
 
-        // Keep memory from becoming too large
         MEMORY = MEMORY.slice(-40);
 
         saveMemory();
 
-        loading.innerText = "J.A.R.V.I.S: " + reply;
+        loading.innerText =
+            "J.A.R.V.I.S: " + reply;
 
         speak(reply);
 
     } catch (error) {
 
         loading.innerText =
-            "J.A.R.V.I.S: ERROR - " + error.message;
+            "J.A.R.V.I.S: ERROR - " +
+            error.message;
 
         console.error("Gemini error:", error);
     }
 }
 
-// ===== 7. IMAGE ANALYSIS ENGINE =====
+
+// ===== 8. IMAGE UPLOAD / CAMERA =====
 
 if (camBtn && imgInput) {
 
@@ -233,13 +501,24 @@ if (camBtn && imgInput) {
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
-            add("SYSTEM: Please select an image file.", "ai");
+
+            add(
+                "SYSTEM: Please select an image.",
+                "ai"
+            );
+
             return;
         }
 
         if (file.size > 10 * 1024 * 1024) {
-            add("SYSTEM: Image must be smaller than 10 MB.", "ai");
+
+            add(
+                "SYSTEM: Image must be smaller than 10 MB.",
+                "ai"
+            );
+
             imgInput.value = "";
+
             return;
         }
 
@@ -247,28 +526,41 @@ if (camBtn && imgInput) {
 
         reader.onload = () => {
 
-            const base64 = reader.result.split(",")[1];
+            const base64 =
+                reader.result.split(",")[1];
 
             const question =
                 input.value.trim() ||
                 "Describe what you see in this image.";
 
-            add("YOU: [IMAGE] " + question, "user");
+            add(
+                "YOU: [IMAGE] " + question,
+                "user"
+            );
 
             input.value = "";
 
-            askVision(base64, file.type, question);
+            askVision(
+                base64,
+                file.type,
+                question
+            );
         };
 
         reader.onerror = () => {
-            add("SYSTEM: Could not read image.", "ai");
+
+            add(
+                "SYSTEM: Could not read image.",
+                "ai"
+            );
         };
 
         reader.readAsDataURL(file);
     };
 }
 
-// ===== 8. VISION / IMAGE AI =====
+
+// ===== 9. IMAGE ANALYSIS ENGINE =====
 
 async function askVision(base64, mimeType, question) {
 
@@ -278,7 +570,10 @@ async function askVision(base64, mimeType, question) {
     );
 
     if (!API_KEY) {
-        loading.innerText = "J.A.R.V.I.S: API key is missing.";
+
+        loading.innerText =
+            "J.A.R.V.I.S: API key is missing.";
+
         return;
     }
 
@@ -295,30 +590,40 @@ async function askVision(base64, mimeType, question) {
                 encodeURIComponent(API_KEY);
 
             const response = await fetch(url, {
+
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 body: JSON.stringify({
+
                     contents: [
                         {
                             role: "user",
                             parts: [
+
                                 { text: question },
+
                                 {
                                     inline_data: {
                                         mime_type: mimeType,
                                         data: base64
                                     }
                                 }
+
                             ]
                         }
                     ],
+
                     generationConfig: {
                         temperature: 0.7,
                         maxOutputTokens: 2048
                     }
+
                 })
+
             });
 
             const data = await response.json();
@@ -347,12 +652,15 @@ async function askVision(base64, mimeType, question) {
                     .join("");
 
             if (!reply) {
-                throw new Error("No image analysis response.");
+
+                throw new Error(
+                    "No image analysis response."
+                );
             }
 
-            loading.innerText = "J.A.R.V.I.S: " + reply;
+            loading.innerText =
+                "J.A.R.V.I.S: " + reply;
 
-            // Store image conversation as text memory
             MEMORY.push({
                 role: "user",
                 text: "[Image] " + question
@@ -398,7 +706,8 @@ async function askVision(base64, mimeType, question) {
     imgInput.value = "";
 }
 
-// ===== 9. VOICE RECOGNITION =====
+
+// ===== 10. VOICE RECOGNITION =====
 
 const SR =
     window.SpeechRecognition ||
@@ -421,7 +730,10 @@ if (SR && micBtn) {
             input.value = text;
         }
 
-        add("YOU: " + text, "user");
+        add(
+            "YOU: " + text,
+            "user"
+        );
 
         askGemini(text);
     };
@@ -429,7 +741,8 @@ if (SR && micBtn) {
     rec.onerror = (event) => {
 
         add(
-            "SYSTEM: Voice error - " + event.error,
+            "SYSTEM: Voice error - " +
+            event.error,
             "ai"
         );
     };
@@ -437,20 +750,30 @@ if (SR && micBtn) {
     micBtn.onclick = () => {
 
         try {
+
             rec.start();
-            micBtn.innerText = "LISTENING...";
+
+            micBtn.innerText =
+                "LISTENING...";
+
         } catch (error) {
-            console.warn("Voice recognition:", error);
+
+            console.warn(
+                "Voice recognition error:",
+                error
+            );
         }
     };
 
     rec.onend = () => {
+
         micBtn.innerText = "🎙️";
     };
 
 } else if (micBtn) {
 
     micBtn.onclick = () => {
+
         add(
             "SYSTEM: Voice recognition is not supported in this browser.",
             "ai"
@@ -458,7 +781,8 @@ if (SR && micBtn) {
     };
 }
 
-// ===== 10. TEXT TO SPEECH =====
+
+// ===== 11. TEXT TO SPEECH =====
 
 let voices = [];
 
@@ -473,12 +797,15 @@ if ("speechSynthesis" in window) {
 
     loadVoices();
 
-    speechSynthesis.onvoiceschanged = loadVoices;
+    speechSynthesis.onvoiceschanged =
+        loadVoices;
 }
 
 function speak(text) {
 
-    if (!("speechSynthesis" in window)) return;
+    if (!("speechSynthesis" in window)) {
+        return;
+    }
 
     speechSynthesis.cancel();
 
@@ -489,7 +816,8 @@ function speak(text) {
     utterance.pitch = 0.85;
 
     const voice = voices.find(
-        v => v.lang && v.lang.startsWith("en")
+        v => v.lang &&
+        v.lang.startsWith("en")
     );
 
     if (voice) {
@@ -499,17 +827,22 @@ function speak(text) {
     speechSynthesis.speak(utterance);
 }
 
-// ===== 11. SEND MESSAGE =====
+
+// ===== 12. SEND BUTTON =====
 
 if (sendBtn && input) {
 
     sendBtn.onclick = () => {
 
-        const text = input.value.trim();
+        const text =
+            input.value.trim();
 
         if (!text) return;
 
-        add("YOU: " + text, "user");
+        add(
+            "YOU: " + text,
+            "user"
+        );
 
         input.value = "";
 
@@ -517,23 +850,30 @@ if (sendBtn && input) {
     };
 }
 
-// Send message using Enter key
+
+// ===== 13. ENTER KEY =====
+
 if (input) {
 
-    input.addEventListener("keydown", (event) => {
+    input.addEventListener(
+        "keydown",
+        (event) => {
 
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
-            event.preventDefault();
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
 
-            sendBtn?.click();
+                event.preventDefault();
+
+                sendBtn?.click();
+            }
         }
-    });
+    );
 }
 
-// ===== 12. CLEAR MEMORY =====
+
+// ===== 14. CLEAR MEMORY =====
 
 if (clearBtn) {
 
@@ -554,6 +894,9 @@ if (clearBtn) {
     };
 }
 
-// ===== 13. SYSTEM READY =====
 
-console.log("J.A.R.V.I.S. system initialized.");
+// ===== 15. SYSTEM READY =====
+
+console.log(
+    "J.A.R.V.I.S. system initialized."
+);
