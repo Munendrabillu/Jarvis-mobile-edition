@@ -1,278 +1,300 @@
-/* ===== J.A.R.V.I.S. THEME ===== */
+/* ===== 1. GOOGLE FONT ===== */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+
+/* ===== 2. GLOBAL RESET ===== */
 
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    font-family: 'Orbitron', sans-serif;
 }
 
-:root {
-    --cyan: #00f7ff;
-    --green: #00ff66;
-    --bg: #000;
-    --panel: #001011;
-}
+
+/* ===== 3. BODY ===== */
 
 body {
-    background: var(--bg);
-    color: var(--cyan);
-    font-family: Arial, sans-serif;
+    background: #000;
+    color: #0ff;
     padding: 20px;
-    min-height: 100vh;
     overflow-x: hidden;
+    min-height: 100vh;
 }
 
-/* ===== HEADER ===== */
+
+/* ===== 4. HEADER ===== */
 
 header {
     text-align: center;
-    margin: 25px 0 35px;
 }
 
 header h1 {
-    font-size: clamp(28px, 7vw, 44px);
-    letter-spacing: 10px;
-    text-shadow: 0 0 15px var(--cyan);
+    letter-spacing: 6px;
+    text-shadow: 0 0 12px #0ff;
 }
 
 header p {
-    margin-top: 12px;
-    font-size: 13px;
-    letter-spacing: 5px;
-    color: #00b8c5;
+    font-size: 10px;
+    letter-spacing: 4px;
+    opacity: 0.6;
 }
 
-/* ===== CORE ===== */
+
+/* ===== 5. JARVIS CORE ===== */
 
 .core {
     position: relative;
-    width: 230px;
-    height: 230px;
-    margin: 35px auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 160px;
+    height: 160px;
+    margin: 25px auto;
 }
+
+
+/* ===== 6. RINGS ===== */
 
 .ring {
     position: absolute;
-    border: 3px solid var(--cyan);
+    border: 2px solid #0ff;
     border-radius: 50%;
-    box-shadow: 0 0 20px var(--cyan);
+    box-shadow: 0 0 15px #0ff;
 }
 
 .r1 {
-    width: 220px;
-    height: 220px;
-    border-right-color: transparent;
-    animation: rotate1 5s linear infinite;
+    inset: 0;
+    border-top-color: transparent;
+    animation: spin 3s linear infinite;
 }
 
 .r2 {
-    width: 170px;
-    height: 170px;
-    border-left-color: transparent;
-    animation: rotate2 3s linear infinite;
+    inset: 20px;
+    border-bottom-color: transparent;
+    animation: spin 2s linear infinite reverse;
 }
+
+
+/* ===== 7. CORE CENTER ===== */
 
 .center {
-    width: 65px;
-    height: 65px;
-    background: var(--cyan);
+    position: absolute;
+    inset: 50px;
+    background: #0ff;
     border-radius: 50%;
-    box-shadow: 0 0 35px var(--cyan);
-    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 30px #0ff;
+    animation: pulse 1.5s infinite;
 }
 
-@keyframes rotate1 {
+
+/* ===== 8. ANIMATIONS ===== */
+
+@keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
 
-@keyframes rotate2 {
-    to {
-        transform: rotate(-360deg);
-    }
-}
-
 @keyframes pulse {
     50% {
-        transform: scale(1.2);
-        box-shadow: 0 0 50px var(--cyan);
+        opacity: 0.4;
     }
 }
 
-/* ===== CORE TEXT ===== */
+
+/* ===== 9. CORE TEXT ===== */
 
 .core-text {
     text-align: center;
-    letter-spacing: 5px;
-    margin: 40px 0;
-    font-size: 16px;
-    text-shadow: 0 0 10px var(--cyan);
+    font-size: 11px;
+    letter-spacing: 3px;
 }
 
-/* ===== DIAGNOSTICS ===== */
+
+/* ===== 10. SYSTEM STATUS ===== */
 
 .status {
-    border: 1px solid #007777;
-    border-radius: 15px;
-    background: var(--panel);
-    padding: 22px;
-    box-shadow: 0 0 15px #003333;
-    margin-bottom: 30px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: rgba(0, 255, 255, 0.05);
+    padding: 12px;
+    margin: 20px 0;
 }
 
 .status h2 {
-    font-size: 20px;
-    letter-spacing: 3px;
-    margin-bottom: 22px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
 }
+
+
+/* ===== 11. STATUS ROWS ===== */
 
 .row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    margin: 18px 0;
-    font-size: 14px;
+    gap: 8px;
+    font-size: 11px;
+    margin: 6px 0;
 }
 
-.row span {
-    color: var(--cyan);
+.on {
+    color: #0f0;
 }
 
-.row b {
-    color: var(--green);
-    text-align: right;
+.off {
+    color: #f00;
 }
 
-/* ===== CHAT ===== */
+
+/* ===== 12. CHAT AREA ===== */
 
 .chat {
-    height: 300px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    height: 250px;
     overflow-y: auto;
-    border: 1px solid #007777;
-    border-radius: 15px;
-    background: #001010;
-    padding: 15px;
-    margin: 30px 0;
-    box-shadow: 0 0 15px #003333;
+    padding: 10px;
+    font-size: 12px;
+    background: rgba(0, 255, 255, 0.02);
 }
 
-.message {
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 10px;
-    line-height: 1.6;
+
+/* ===== 13. CHAT MESSAGES ===== */
+
+.msg {
+    margin: 6px 0;
+    padding: 8px;
+    border-left: 2px solid #0ff;
+    background: rgba(0, 255, 255, 0.08);
     overflow-wrap: anywhere;
+    white-space: pre-wrap;
 }
 
-.user-message {
-    color: white;
-    background: #003d46;
-    border-left: 3px solid var(--cyan);
+.msg.user {
+    border-left-color: #fff;
+    color: #fff;
 }
 
-.jarvis-message {
-    color: var(--cyan);
-    background: #001b1b;
-    border-left: 3px solid var(--green);
+.msg.ai {
+    border-left-color: #0ff;
 }
 
-/* ===== INPUT AREA ===== */
+
+/* ===== 14. INPUT AREA ===== */
 
 .input-area {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
+    margin-top: 12px;
 }
 
-input[type="text"] {
-    width: 100%;
+
+/* ===== 15. TEXT INPUT ===== */
+
+input {
+    flex: 1 1 220px;
     min-width: 0;
-    padding: 18px;
-    border: 1px solid var(--cyan);
-    border-radius: 10px;
-    background: black;
-    color: var(--cyan);
-    font-size: 16px;
+    background: #000;
+    border: 1px solid #0ff;
+    color: #0ff;
+    padding: 10px;
     outline: none;
 }
 
-input[type="text"]:focus {
-    box-shadow: 0 0 15px var(--cyan);
+input:focus {
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
 }
 
 input::placeholder {
-    color: #009999;
+    color: rgba(0, 255, 255, 0.5);
 }
 
+
+/* ===== 16. BUTTONS ===== */
+
 button {
-    flex: 1;
-    min-width: 65px;
-    padding: 15px 10px;
-    border: 1px solid var(--cyan);
-    border-radius: 10px;
-    background: var(--cyan);
-    color: black;
+    background: #0ff;
+    color: #000;
+    border: none;
+    padding: 10px 16px;
     font-weight: bold;
-    font-size: 13px;
     cursor: pointer;
-    transition: 0.3s;
+    white-space: nowrap;
+    transition: 0.2s;
 }
 
 button:hover {
-    background: black;
-    color: var(--cyan);
-    box-shadow: 0 0 15px var(--cyan);
+    background: #fff;
+    box-shadow: 0 0 12px #0ff;
 }
 
-#clear-btn {
-    min-width: 120px;
+button:active {
+    transform: scale(0.96);
 }
 
-/* ===== MOBILE ===== */
 
-@media (max-width: 480px) {
+/* ===== 17. SCROLLBAR ===== */
+
+.chat::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat::-webkit-scrollbar-thumb {
+    background: #0ff;
+}
+
+.chat::-webkit-scrollbar-track {
+    background: #111;
+}
+
+
+/* ===== 18. MOBILE RESPONSIVE ===== */
+
+@media (max-width: 600px) {
 
     body {
         padding: 12px;
     }
 
     header h1 {
-        letter-spacing: 6px;
+        font-size: 24px;
+        letter-spacing: 4px;
     }
 
     .core {
-        width: 210px;
-        height: 210px;
+        width: 140px;
+        height: 140px;
     }
 
-    .r1 {
-        width: 200px;
-        height: 200px;
+    .center {
+        inset: 45px;
     }
 
     .r2 {
-        width: 155px;
-        height: 155px;
+        inset: 18px;
     }
 
     .status {
-        padding: 18px;
+        padding: 10px;
     }
 
     .row {
-        font-size: 12px;
+        font-size: 10px;
     }
 
     .chat {
-        height: 300px;
+        height: 250px;
+        font-size: 11px;
     }
 
-    button {
-        font-size: 12px;
+    .input-area input {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .input-area button {
+        flex: 1 1 auto;
+        padding: 10px 9px;
+        font-size: 10px;
     }
 }
