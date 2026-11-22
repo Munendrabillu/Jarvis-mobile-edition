@@ -38,8 +38,77 @@ async function requestGeminiInteraction(input, systemInstruction = GEMINI_SYSTEM
   if (!reply) throw new Error(data?.status === 'failed' ? 'Gemini could not complete this request.' : 'Gemini returned an empty response.');
   return reply;
 }
+
+// ===== GEMINI API CONNECTION - FIXED =====
+
 const GEMINI_MODEL = 'gemini-3.8-flash';
-const GEMINI_SYSTEM_INSTRUCTION = 'You are J.A.R.V.I.S, a friendly personal assistant for Munendra. Reply naturally in a warm Telugu-English mix, using clear concise language. If you do not know, say so plainly.';
+
+const GEMINI_SYSTEM_INSTRUCTION =
+  'You are J.A.R.V.I.S, a friendly personal assistant for Vamshi. Reply naturally in a warm Telugu-English mix, using clear concise language. If you do not know, say so plainly.';
+
+async function requestGeminiInteraction(input, systemInstruction = GEMINI_SYSTEM_INSTRUCTION) {
+
+  if (!API_KEY || !API_KEY.trim()) {
+    throw new Error('Gemini API key is missing. Please enter your API key.');
+  }
+
+  const payload = {
+    model: GEMINI_MODEL,
+    input: input,
+    store: false
+  };
+
+  if (systemInstruction) {
+    payload.system_instruction = systemInstruction;
+  }
+
+  let response;
+
+  try {
+    response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/interactions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': API_KEY.trim()
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+  } catch (error) {
+    console.error('Gemini Network Error:', error);
+    throw new Error(
+      'Network/CORS error. Check internet connection and browser console.'
+    );
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    console.error('Gemini API Error:', data);
+
+    throw new Error(
+      data?.error?.message ||
+      `Gemini API failed with HTTP ${response.status}`
+    );
+  }
+
+  const reply =
+    data.output_text ||
+    (data.steps || [])
+      .filter(step => step.type === 'model_output')
+      .flatMap(step => step.content || [])
+      .filter(part => typeof part.text === 'string')
+      .map(part => part.text)
+      .join('\n');
+
+  if (!reply || !reply.trim()) {
+    throw new Error('Gemini returned an empty response.');
+  }
+
+  return reply.trim();
+}
 
 // ===== 2. MEMORY =====
 let MEMORY = [];
