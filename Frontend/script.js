@@ -55,6 +55,17 @@ const micBtn = document.getElementById("mic-btn");
 const clearBtn = document.getElementById("clear-btn");
 const camBtn = document.getElementById("cam-btn");
 const imgInput = document.getElementById("img-input");
+// JARVIS waiting
+setJarvisVisualState('IDLE');
+
+// When microphone starts
+setJarvisVisualState('LISTENING');
+
+// When AI starts generating a response
+setJarvisVisualState('THINKING');
+
+// When AI finishes responding
+setJarvisVisualState('IDLE');
 
 // ===== 4. CHAT DISPLAY =====
 
@@ -81,6 +92,26 @@ MEMORY.forEach(m => {
         m.role === "user" ? "user" : "ai"
     );
 });
+
+// ===== JARVIS VISUAL STATE HANDLER =====
+
+function setJarvisVisualState(state) {
+  if (!orbInstance) return;
+
+  switch (state) {
+    case 'IDLE':
+      orbInstance.setColor('#00ffff');
+      break;
+
+    case 'LISTENING':
+      orbInstance.setColor('#00ff00');
+      break;
+
+    case 'THINKING':
+      orbInstance.setColor('#ffa500');
+      break;
+  }
+}
 
 // ===== 5. API FETCH HELPER =====
 
