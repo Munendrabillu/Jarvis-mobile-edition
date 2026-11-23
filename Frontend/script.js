@@ -1,13 +1,8 @@
-
 // ===== 1. GEMINI API KEY =====
-let API_KEY = (localStorage.getItem('jarvis_key') || '').trim();
-
+let API_KEY = localStorage.getItem('jarvis_key');
 if (!API_KEY) {
-  API_KEY = (prompt('Enter your Gemini API Key:') || '').trim();
-
-  if (API_KEY) {
-    localStorage.setItem('jarvis_key', API_KEY);
-  }
+  API_KEY = prompt('Enter your Gemini API Key:');
+  if (API_KEY) localStorage.setItem('jarvis_key', API_KEY);
 }
 
 function extractInteractionText(data) {
