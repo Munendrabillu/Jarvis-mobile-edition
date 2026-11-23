@@ -23,76 +23,29 @@ function extractInteractionText(data) {
 }
 
 
-async function requestGeminiInteraction(
-  input,
-  systemInstruction = GEMINI_SYSTEM_INSTRUCTION
-) {
-  const key = (localStorage.getItem('jarvis_key') || API_KEY || '').trim();
-
-  if (!key) {
-    throw new Error('Gemini API key is missing. Please enter a valid key.');
-  }
-
-  const payload = {
-    model: GEMINI_MODEL,
-    input,
-    store: false
-  };
-
-  if (systemInstruction) {
-    payload.system_instruction = systemInstruction;
-  }
-
-  let response;
-
-  try {
-    response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/interactions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': key
-        },
-        body: JSON.stringify(payload)
-      }
-    );
-  } catch (error) {
-    throw new Error('Network error. Check your internet connection.');
-  }
-
+async function requestGeminiInteraction(input, systemInstruction = GEMINI_SYSTEM_INSTRUCTION) {
+  if (!API_KEY) throw new Error('Gemini API key is missing. Reload the page and enter it again.');
+  const payload = { model: GEMINI_MODEL, input, store: false };
+  if (systemInstruction) payload.system_instruction = systemInstruction;
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': API_KEY,
+      'Api-Revision': '2026-05-20'
+    },
+    body: JSON.stringify(payload)
+  });
   const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    console.error('Gemini API error:', response.status, data);
-
-    if (response.status === 401) {
-      throw new Error(
-        'Invalid API key. Open Settings in Google AI Studio and replace your key.'
-      );
-    }
-
-    if (response.status === 403) {
-      throw new Error(
-        'API access denied. Check your Gemini API key restrictions.'
-      );
-    }
-
-    throw new Error(
-      data?.error?.message || `Gemini API failed with HTTP ${response.status}`
-    );
+  if (!response.ok || data?.error) {
+    throw new Error(data?.error?.message || 'Gemini request failed (' + response.status + ').');
   }
-
   const reply = extractInteractionText(data);
-
-  if (!reply) {
-    throw new Error('Gemini returned an empty response.');
-  }
-
+  if (!reply) throw new Error(data?.status === 'failed' ? 'Gemini could not complete this request.' : 'Gemini returned an empty response.');
   return reply;
 }
 
-const GEMINI_MODEL = 'gemini-3.8-flash';
+const GEMINI_MODEL = 'gemini-3.8','gemini-3.8-flash';
 const GEMINI_SYSTEM_INSTRUCTION = 'You are J.A.R.V.I.S, a friendly personal assistant for Munendra. Reply naturally in a warm Telugu-English mix, using clear concise language. If you do not know, say so plainly.';
 
 // ===== 2. MEMORY =====
