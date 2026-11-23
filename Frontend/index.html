@@ -1,106 +1,467 @@
+I create my own Jarvis in my mobile this my code check it once correct or wrong
 
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#00ffff">
-  <meta name="description" content="JARVIS Personal AI Assistant">
+This my Index.html code : -
 
-  <title>J.A.R.V.I.S Personal AI</title>
+\<!doctype html>
+\<html lang="en" data-theme="dark">
+\<head>
+&#x20; \<link rel="manifest" href="./manifest.json">
+&#x20; \<meta name="apple-mobile-web-app-capable" content="yes">
+&#x20; \<meta name="mobile-web-app-capable" content="yes">
+&#x20; \<meta charset="UTF-8">
+&#x20; \<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+&#x20; \<meta name="theme-color" content="#0b0d12">
+&#x20; \<meta name="description" content="J.A.R.V.I.S personal AI assistant">
 
-  <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="./style.css">
-  <link rel="apple-touch-icon" href="./icon-192.png">
-</head>
+&#x20; \<title>J.A.R.V.I.S — Personal AI\</title>
 
-<body>
-  <div class="app">
+&#x20; \<!-- Existing CSS -->
+&#x20; \<link rel="stylesheet" href="style.css?v=jarvis-stage-grid-scroll-v8-20260930-final">
 
-    <header class="topbar">
-      <button id="menu-btn" type="button">☰</button>
-      <h1>J.A.R.V.I.S</h1>
-      <button id="theme-btn" type="button">☀️</button>
-    </header>
+&#x20; \<!-- ORBS Library CSS -->
+&#x20; \<link rel="stylesheet" href="[https://cdn.jsdelivr.net/npm/orbs@latest/dist/orbs.css](https://cdn.jsdelivr.net/npm/orbs@latest/dist/orbs.css)">
 
-    <aside class="sidebar" id="sidebar">
-      <button id="new-chat-btn" type="button">＋ New Chat</button>
-      <h3>Chat History</h3>
-      <div id="history-list"></div>
-      <button id="settings-btn" type="button">⚙ Settings</button>
-    </aside>
+&#x20; \<!-- ORBS Library JavaScript -->
+&#x20; \<script src="[https://cdn.jsdelivr.net/npm/orbs@latest/dist/orbs.min.js](https://cdn.jsdelivr.net/npm/orbs@latest/dist/orbs.min.js)">\</script>
 
-    <main class="main">
+&#x20; \<!-- ORB Container Styling -->
+&#x20; \<style>
+&#x20;   \#jarvis-core-container {
+&#x20;     width: 150px;
+&#x20;     height: 150px;
+&#x20;     margin: 0 auto 20px auto;
+&#x20;     position: relative;
+&#x20;     display: flex;
+&#x20;     justify-content: center;
+&#x20;     align-items: center;
+&#x20;   }
 
-      <section class="hero">
-        <div id="jarvis-orb" class="orb">
-          <div class="orb-inner">J</div>
-        </div>
+&#x20;   \#jarvis-core-container canvas {
+&#x20;     border-radius: 50%;
+&#x20;     box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+&#x20;     filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6));
+&#x20;   }
+&#x20; \</style>
+\</head>
 
-        <h2>Good day, Sir.</h2>
-        <p id="status">J.A.R.V.I.S systems online.</p>
-      </section>
+\<body>
+&#x20; \<div class="app-shell">
 
-      <section id="chat-box" class="chat-box">
-        <div class="welcome">
-          <h2>How can I help you?</h2>
-          <p>Your personal AI assistant is ready.</p>
-        </div>
-      </section>
+&#x20;   \<!-- SIDEBAR -->
+&#x20;   \<aside class="sidebar" id="sidebar" aria-label="Main navigation">
 
-      <div id="image-preview" class="image-preview"></div>
+&#x20;     \<div class="sidebar-top">
+&#x20;       \<a class="brand" href="./" aria-label="J.A.R.V.I.S home">
 
-      <div class="input-area">
-        <textarea
-          id="user-input"
-          placeholder="Ask JARVIS anything..."
-          rows="1"
-        ></textarea>
+&#x20;         \<span class="brand-mark" aria-hidden="true">
+&#x20;           \<svg viewBox="0 0 36 36">
+&#x20;             \<circle cx="18" cy="18" r="15"/>
+&#x20;             \<path d="M18 7v22M7 18h22M10.2 10.2l15.6 15.6M25.8 10.2 10.2 25.8"/>
+&#x20;             \<circle cx="18" cy="18" r="4"/>
+&#x20;           \</svg>
+&#x20;         \</span>
 
-        <div class="controls">
-          <button id="mic-btn" type="button" title="Voice">🎙️</button>
-          <button id="cam-btn" type="button" title="Image">📷</button>
-          <button id="send" type="button">SEND ➤</button>
+&#x20;         \<span class="brand-copy">
+&#x20;           \<strong>J.A.R.V.I.S\</strong>
+&#x20;           \<small>PERSONAL AI\</small>
+&#x20;         \</span>
+&#x20;       \</a>
 
-          <input
-            type="file"
-            id="img-input"
-            accept="image/*"
-            capture="environment"
-            hidden
-          >
-        </div>
-      </div>
+&#x20;       \<button class="icon-button sidebar-collapse"
+&#x20;         id="sidebar-toggle"
+&#x20;         type="button"
+&#x20;         aria-label="Collapse sidebar"
+&#x20;         title="Collapse sidebar">
 
-      <footer>
-        <p>J.A.R.V.I.S Personal AI · Powered by Gemini</p>
-        <button id="clear-btn" type="button">🧹 Clear Chat</button>
-      </footer>
-    </main>
-  </div>
+&#x20;         \<svg viewBox="0 0 24 24" aria-hidden="true">
+&#x20;           \<path d="M4 6h16M4 12h16M4 18h16"/>
+&#x20;         \</svg>
+&#x20;       \</button>
+&#x20;     \</div>
 
-  <dialog id="settings-dialog">
-    <h2>JARVIS Settings</h2>
+&#x20;     \<!-- NEW CHAT -->
+&#x20;     \<button class="new-chat" id="new-chat" type="button">
+&#x20;       \<span class="new-chat-icon" aria-hidden="true">+\</span>
+&#x20;       \<span>New chat\</span>
+&#x20;     \</button>
 
-    <label for="api-key">Gemini API Key</label>
-    <input id="api-key" type="password" placeholder="Enter Gemini API Key">
+&#x20;     \<!-- CHAT HISTORY -->
+&#x20;     \<div class="history-heading">
+&#x20;       \<span>RECENT\</span>
+&#x20;       \<span class="history-count" id="history-count">\</span>
+&#x20;     \</div>
 
-    <label for="language">Response Language</label>
-    <select id="language">
-      <option value="both">English + Telugu</option>
-      <option value="en">English</option>
-      <option value="te">Telugu</option>
-    </select>
+&#x20;     \<div class="history-list"
+&#x20;       id="history-list"
+&#x20;       role="group"
+&#x20;       aria-label="Conversation history">
+&#x20;     \</div>
 
-    <label>
-      <input type="checkbox" id="voice-toggle" checked>
-      Enable spoken responses
-    </label>
+&#x20;     \<div class="sidebar-spacer">\</div>
 
-    <button id="save-settings" type="button">Save Settings</button>
-    <button id="close-settings" type="button">Close</button>
-  </dialog>
+&#x20;     \<!-- SIDEBAR FOOTER -->
+&#x20;     \<div class="sidebar-footer">
 
-  <script src="./script.js"></script>
-</body>
-</html>
+&#x20;       \<button class="sidebar-link" id="settings-open" type="button">
+&#x20;         \<svg viewBox="0 0 24 24" aria-hidden="true">
+&#x20;           \<path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/>
+&#x20;           \<path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"/>
+&#x20;         \</svg>
+&#x20;         \<span>Settings\</span>
+&#x20;       \</button>
+
+&#x20;       \<div class="profile-row">
+&#x20;         \<span class="profile-avatar">M\</span>
+&#x20;         \<span class="profile-name">Munendra\</span>
+&#x20;         \<span class="profile-label">PERSONAL\</span>
+&#x20;       \</div>
+
+&#x20;     \</div>
+&#x20;   \</aside>
+
+&#x20;   \<!-- SIDEBAR BACKDROP -->
+&#x20;   \<button class="sidebar-backdrop"
+&#x20;     id="sidebar-backdrop"
+&#x20;     type="button"
+&#x20;     aria-label="Close navigation"
+&#x20;     hidden>
+&#x20;   \</button>
+
+&#x20;   \<!-- MAIN AREA -->
+&#x20;   \<main class="main-area">
+
+&#x20;     \<!-- TOPBAR -->
+&#x20;     \<header class="topbar">
+
+&#x20;       \<button class="icon-button menu-button"
+&#x20;         id="menu-btn"
+&#x20;         type="button"
+&#x20;         aria-label="Open navigation"
+&#x20;         title="Open navigation">
+
+&#x20;         \<svg viewBox="0 0 24 24" aria-hidden="true">
+&#x20;           \<path d="M4 6h16M4 12h16M4 18h16"/>
+&#x20;         \</svg>
+&#x20;       \</button>
+
+&#x20;       \<div class="topbar-title">
+&#x20;         \<span>J.A.R.V.I.S\</span>
+&#x20;         \<span class="topbar-divider">/\</span>
+&#x20;         \<span class="topbar-subtitle">Personal assistant\</span>
+&#x20;       \</div>
+
+&#x20;       \<div class="topbar-actions">
+
+&#x20;         \<span class="ready-badge">
+&#x20;           \<span class="ready-dot">\</span>
+&#x20;           READY
+&#x20;         \</span>
+
+&#x20;         \<!-- WAKE WORD BUTTON -->
+&#x20;         \<button class="icon-button wake-button"
+&#x20;           id="wake-btn"
+&#x20;           type="button"
+&#x20;           aria-label="Toggle Wake Word"
+&#x20;           title="Listen for Hey Jarvis">
+
+&#x20;           \<svg viewBox="0 0 24 24"
+&#x20;             fill="none"
+&#x20;             stroke="currentColor"
+&#x20;             stroke-width="2"
+&#x20;             stroke-linecap="round"
+&#x20;             stroke-linejoin="round">
+
+&#x20;             \<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+&#x20;             \<path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+&#x20;             \<line x1="12" y1="19" x2="12" y2="22"/>
+&#x20;           \</svg>
+&#x20;         \</button>
+
+&#x20;         \<!-- WAKE STATUS -->
+&#x20;         \<span id="wake-status"
+&#x20;           style="font-size:0.7rem; color:#888; margin-right:5px;">
+&#x20;           WAKE: OFF
+&#x20;         \</span>
+
+&#x20;         \<!-- CLEAR BUTTON -->
+&#x20;         \<button class="icon-button clear-button"
+&#x20;           id="clear-btn"
+&#x20;           type="button"
+&#x20;           aria-label="Clear current conversation"
+&#x20;           title="Clear current conversation">
+
+&#x20;           \<svg viewBox="0 0 24 24" aria-hidden="true">
+&#x20;             \<path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m4 3v6m4-6v6"/>
+&#x20;           \</svg>
+&#x20;         \</button>
+
+&#x20;       \</div>
+&#x20;     \</header>
+
+&#x20;     \<!-- CONVERSATION STAGE -->
+&#x20;     \<section class="conversation-stage"
+&#x20;       id="conversation-stage"
+&#x20;       aria-label="Conversation"
+&#x20;       tabindex="0">
+
+&#x20;       \<!-- WELCOME SCREEN -->
+&#x20;       \<div class="welcome" id="welcome">
+
+&#x20;         \<!-- LIVE ORB CONTAINER -->
+&#x20;         \<div id="jarvis-core-container" aria-hidden="true">
+&#x20;           \<!-- JavaScript will inject the canvas here -->
+&#x20;         \</div>
+
+&#x20;         \<!-- WELCOME TEXT -->
+&#x20;         \<div class="welcome-copy">
+
+&#x20;           \<p class="eyebrow">
+&#x20;             \<span>\</span>
+&#x20;             YOUR PERSONAL AI
+&#x20;           \</p>
+
+&#x20;           \<h1>How can I help today?\</h1>
+
+&#x20;           \<p class="welcome-subtitle">
+&#x20;             A thoughtful assistant for ideas, answers and everyday tasks.
+&#x20;           \</p>
+&#x20;         \</div>
+
+&#x20;         \<!-- SUGGESTED PROMPTS -->
+&#x20;         \<div class="prompt-grid" aria-label="Suggested prompts">
+
+&#x20;           \<button class="prompt-card"
+&#x20;             type="button"
+&#x20;             data-prompt="Jarvis, give me my morning briefing">
+
+&#x20;             \<span class="prompt-icon">✦\</span>
+
+&#x20;             \<span>
+&#x20;               \<strong>Morning briefing\</strong>
+&#x20;               \<small>Start your day informed\</small>
+&#x20;             \</span>
+
+&#x20;             \<span class="prompt-arrow">↗\</span>
+&#x20;           \</button>
+
+&#x20;           \<button class="prompt-card"
+&#x20;             type="button"
+&#x20;             data-prompt="What is the weather today?">
+
+&#x20;             \<span class="prompt-icon">◌\</span>
+
+&#x20;             \<span>
+&#x20;               \<strong>Check the weather\</strong>
+&#x20;               \<small>Get a local forecast\</small>
+&#x20;             \</span>
+
+&#x20;             \<span class="prompt-arrow">↗\</span>
+&#x20;           \</button>
+
+&#x20;           \<button class="prompt-card"
+&#x20;             type="button"
+&#x20;             data-prompt="What is the current Bitcoin price?">
+
+&#x20;             \<span class="prompt-icon">◇\</span>
+
+&#x20;             \<span>
+&#x20;               \<strong>Market snapshot\</strong>
+&#x20;               \<small>Check Bitcoin today\</small>
+&#x20;             \</span>
+
+&#x20;             \<span class="prompt-arrow">↗\</span>
+&#x20;           \</button>
+
+&#x20;           \<button class="prompt-card"
+&#x20;             type="button"
+&#x20;             data-prompt="Tell me a useful idea for today">
+
+&#x20;             \<span class="prompt-icon">⌁\</span>
+
+&#x20;             \<span>
+&#x20;               \<strong>Explore an idea\</strong>
+&#x20;               \<small>Think something through\</small>
+&#x20;             \</span>
+
+&#x20;             \<span class="prompt-arrow">↗\</span>
+&#x20;           \</button>
+
+&#x20;         \</div>
+&#x20;       \</div>
+
+&#x20;       \<!-- CHAT MESSAGES -->
+&#x20;       \<div class="chat"
+&#x20;         id="chat"
+&#x20;         role="log"
+&#x20;         aria-label="Chat messages"
+&#x20;         aria-live="polite"
+&#x20;         aria-relevant="additions text"
+&#x20;         tabindex="0">
+&#x20;       \</div>
+
+&#x20;     \</section>
+
+&#x20;     \<!-- COMPOSER -->
+&#x20;     \<footer class="composer-dock">
+
+&#x20;       \<!-- THINKING STATUS -->
+&#x20;       \<div class="thinking-status"
+&#x20;         id="thinking-status"
+&#x20;         aria-live="polite"
+&#x20;         hidden>
+
+&#x20;         \<span class="thinking-orb" aria-hidden="true">
+&#x20;           \<i class="thinking-ring">\</i>
+&#x20;           \<i class="thinking-core">\</i>
+&#x20;         \</span>
+
+&#x20;         \<span id="thinking-label">
+&#x20;           J.A.R.V.I.S is thinking
+&#x20;         \</span>
+
+&#x20;         \<span class="thinking-dots" aria-hidden="true">
+&#x20;           \<i>\</i>
+&#x20;           \<i>\</i>
+&#x20;           \<i>\</i>
+&#x20;         \</span>
+&#x20;       \</div>
+
+&#x20;       \<!-- INPUT SHELL -->
+&#x20;       \<div class="composer-shell">
+
+&#x20;         \<!-- IMAGE BUTTON -->
+&#x20;         \<button class="composer-tool"
+&#x20;           id="cam-btn"
+&#x20;           type="button"
+&#x20;           aria-label="Analyze image"
+&#x20;           title="Attach an image">
+
+&#x20;           \<svg viewBox="0 0 24 24" aria-hidden="true">
+&#x20;             \<path d="M4 8.5h3l1.4-2h7.2l1.4 2h3v10H4z"/>
+&#x20;             \<circle cx="12" cy="13.5" r="3.2"/>
+&#x20;           \</svg>
+&#x20;         \</button>
+
+&#x20;         \<!-- MESSAGE INPUT -->
+&#x20;         \<textarea id="msg"
+&#x20;           rows="1"
+&#x20;           placeholder="Message J.A.R.V.I.S..."
+&#x20;           aria-label="Message J.A.R.V.I.S">
+&#x20;         \</textarea>
+
+&#x20;         \<!-- IMAGE UPLOAD -->
+&#x20;         \<input id="img-input"
+&#x20;           type="file"
+&#x20;           accept="image/\*"
+&#x20;           hidden>
+
+&#x20;         \<!-- COMPOSER ACTIONS -->
+&#x20;         \<div class="composer-actions">
+
+&#x20;           \<!-- MICROPHONE -->
+&#x20;           \<button class="composer-tool voice-button"
+&#x20;             id="mic-btn"
+&#x20;             type="button"
+&#x20;             aria-label="Activate voice input"
+&#x20;             title="Voice input">
+
+&#x20;             \<svg viewBox="0 0 24 24" aria-hidden="true">
+&#x20;               \<rect x="9" y="3" width="6" height="12" rx="3"/>
+&#x20;               \<path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8"/>
+&#x20;             \</svg>
+&#x20;           \</button>
+
+&#x20;           \<!-- SEND -->
+&#x20;           \<button class="send-button"
+&#x20;             id="send"
+&#x20;             type="button"
+&#x20;             aria-label="Send message"
+&#x20;             title="Send message">
+
+&#x20;             \<svg viewBox="0 0 24 24" aria-hidden="true">
+&#x20;               \<path d="M12 19V5m-6 6 6-6 6 6"/>
+&#x20;             \</svg>
+&#x20;           \</button>
+
+&#x20;         \</div>
+&#x20;       \</div>
+
+&#x20;       \<!-- FOOTER NOTE -->
+&#x20;       \<p class="composer-note">
+&#x20;         ENTER TO SEND
+&#x20;         \<span>·\</span>
+&#x20;         SHIFT + ENTER FOR A NEW LINE
+&#x20;         \<span class="note-separator">·\</span>
+&#x20;         J.A.R.V.I.S can make mistakes
+&#x20;       \</p>
+
+&#x20;     \</footer>
+&#x20;   \</main>
+
+&#x20;   \<!-- SETTINGS SCRIM -->
+&#x20;   \<div class="settings-scrim" id="settings-scrim" hidden>\</div>
+
+&#x20;   \<!-- SETTINGS PANEL -->
+&#x20;   \<aside class="settings-panel"
+&#x20;     id="settings-panel"
+&#x20;     aria-labelledby="settings-title"
+&#x20;     aria-modal="true"
+&#x20;     role="dialog"
+&#x20;     hidden>
+
+&#x20;     \<!-- SETTINGS HEADER -->
+&#x20;     \<div class="settings-header">
+
+&#x20;       \<div>
+&#x20;         \<p class="eyebrow">PREFERENCES\</p>
+&#x20;         \<h2 id="settings-title">Settings\</h2>
+&#x20;       \</div>
+
+&#x20;       \<button class="icon-button"
+&#x20;         id="settings-close"
+&#x20;         type="button"
+&#x20;         aria-label="Close settings">
+&#x20;         ×
+&#x20;       \</button>
+&#x20;     \</div>
+
+&#x20;     \<!-- THEME SETTINGS -->
+&#x20;     \<div class="settings-group">
+
+&#x20;       \<label for="theme-select">Appearance\</label>
+
+&#x20;       \<p>Set the tone of your workspace.\</p>
+
+&#x20;       \<select id="theme-select">
+&#x20;         \<option value="dark">Midnight · dark\</option>
+&#x20;         \<option value="light">Silver · light\</option>
+&#x20;       \</select>
+&#x20;     \</div>
+
+&#x20;     \<!-- HISTORY SETTINGS -->
+&#x20;     \<div class="settings-group">
+&#x20;       \<strong>Conversation history\</strong>
+&#x20;       \<p>Your conversations are saved in this browser profile.\</p>
+&#x20;     \</div>
+
+&#x20;     \<!-- SETTINGS FOOTER -->
+&#x20;     \<div class="settings-bottom">
+
+&#x20;       \<button class="danger-button"
+&#x20;         id="clear-memory-setting"
+&#x20;         type="button">
+&#x20;         Clear current conversation
+&#x20;       \</button>
+
+&#x20;       \<p>J.A.R.V.I.S · Personal AI\</p>
+&#x20;     \</div>
+
+&#x20;   \</aside>
+
+&#x20; \</div>
+
+&#x20; \<!-- MAIN JAVASCRIPT -->
+&#x20; \<script src="script.js?v=gemini38-wake-loop-20261007-r5">\</script>
+
+\</body>
+\</html>
